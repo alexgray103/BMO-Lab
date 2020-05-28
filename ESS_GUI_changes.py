@@ -125,7 +125,7 @@ class Main_GUI:
         B4 = 2.083514791*(10**-8)
         B5 = -1.290505933*(10**-11)
         '''
-        wavelength = pixel
+        #wavelength = pixel
         
         #create spectrometer folder to store all data and settings
         folder_path = '/home/pi/Desktop/Spectrometer'
@@ -160,14 +160,26 @@ class Main_GUI:
             settings_open = open(settings_file, 'w', newline = '')
             csv_row = [('Settings', ''),('pulse',1),('pulse_rate',60),\
                    ('integration_time',300),('dark_subtract',1),\
-                   ('lamp_voltage',1000), ('autopulse_threshold',52000),\
+                   ('lamp_voltage',1000), ('autopulse_threshold',4000),\
                    ('max_autopulse_number',10),('smoothing_half_width',2),\
                    ('min_wavelength',300),('max_wavelength',900),\
                    ('Number_of_Averages', 2), ('smoothing', 1),\
                    ('Open Measurements', 5), ('open_pulses', 1),\
-                   ('a_0', 311.1585037), ('b_1', 2.706594330),\
-                   ('b_2', -1.292296203), ('b_3', -6.644532253),\
-                   ('b_4', 5.749476565), ('b_5', 9.954642163)]
+                   ('a_0', 308.6578728), ('b_1', 2.71512091),\
+                   ('b_2', -1.581742352), ('b_3', -3.64516878),\
+                   ('b_4', -6.471720765), ('b_5', 27.41135617),\
+                   ('burst_delay', 1.0), ('burst_number', 1),\
+                   ('measurement_per_burst_1', 5),('measurement_per_burst_2', 5),\
+                   ('measurement_per_burst_3', 5),('measurement_per_burst_4', 5),\
+                   ('measurement_per_burst_5', 5),('measurement_per_burst_6', 5),\
+                   ('measurement_per_burst_7', 5),('measurement_per_burst_8', 5),\
+                   ('measurement_per_burst_9', 5),('measurement_per_burst_10', 5),\
+                   ('pulse_per_measurement_1', 5),('pulse_per_measurement_2', 5),\
+                   ('pulse_per_measurement_3', 5),('pulse_per_measurement_4', 5),\
+                   ('pulse_per_measurement_5', 5),('pulse_per_measurement_6', 5),\
+                   ('pulse_per_measurement_7', 5),('pulse_per_measurement_8', 5),\
+                   ('pulse_per_measurement_9', 5),('pulse_per_measurement_10', 5)]   # allocate 10 spaces for burst info
+            
             with settings_open:
                 csv_writer = csv.writer(settings_open, delimiter = ',')
                 csv_writer.writerows(csv_row)
@@ -179,14 +191,21 @@ class Main_GUI:
                 settings = list(csv_reader)
                 return settings
             
-        def acquire_avg():  # function to acquire data from spectrometer (multiple scans)
-            # open settings and send integ time to spectrometer 
+        def settings_write(settings):
+                settings_open = open(settings_file, 'w')
+                with settings_open:
+                   csv_writer = csv.writer(settings_open, delimiter = ',')
+                   csv_writer.writerows(settings)
+        '''           
+        def dark_subtract():
             settings = settings_read()
             number_avg = int(settings[11][1])
             integ_time = int(settings[3][1])
             smoothing_used = int(settings[12][1])
             smoothing_width = int(settings[8][1])
+            pulses = int(settings[1][1])
             ser.write(b"set_integ %0.6f\n" % integ_time)
+            ser.write(b"pulse 0\n")
             sleep(0.5)
             # tell spectromter to send data
             data = 0
@@ -204,6 +223,62 @@ class Main_GUI:
                         for i in range(0,len(data)-smoothing_width,1):
                             data[i] = sum(np.ones(smoothing_width)*dummy[i:i+smoothing_width])/(smoothing_width)
                     return data
+            '''
+            
+        def acquire_avg():  # function to acquire data from spectrometer (multiple scans)
+            # open settings and send integ time to spectrometer 
+            settings = settings_read()
+            number_avg = int(settings[11][1])
+            integ_time = int(settings[3][1])
+            smoothing_used = int(settings[12][1])
+            smoothing_width = int(settings[8][1])
+            pulses = int(settings[1][1])
+            dark_subtract = int(settings[4][1])
+            
+            if dark_subtract == 1:
+                ser.write(b"set_integ %0.6f\n" % integ_time)
+                ser.write(b"pulse 0\n")
+                sleep(0.5)
+                # tell spectromter to send data
+                data = 0
+                data_dark = 0
+                for x in range(0,5,1): #take scans then average
+                    ser.write(b"read\n")
+                    #read data and save to pseudo csv to plot
+                    data_read = ser.readline()
+                    #data = ser.read_until('\n', size=None)
+                    data_temp = np.array([int(p) for p in data_read.split(b",")])
+                    data_dark = data_dark + data_temp
+                    if x == 4:  # reached number of averages
+                        data_dark = data_dark/5 #take average of data and save
+                        if smoothing_used == 1:  # if smoothing is checked smooth array
+                            dummy = np.ravel(data_dark)
+                            for i in range(0,len(data_dark)-smoothing_width,1):
+                                data_dark[i] = sum(np.ones(smoothing_width)*dummy[i:i+smoothing_width])/(smoothing_width)
+            else:
+                data_dark = 0
+            
+            
+            ser.write(b"set_integ %0.6f\n" % integ_time)
+            ser.write(b"pulse %d\n" % pulses)
+            sleep(0.5)
+            # tell spectromter to send data
+            data = 0
+            for x in range(0,number_avg,1): #take scans then average
+                ser.write(b"read\n")
+                #read data and save to pseudo csv to plot
+                data_read = ser.readline()
+                #data = ser.read_until('\n', size=None)
+                data_temp = np.array([int(p) for p in data_read.split(b",")])
+                data = data + data_temp
+                if x == number_avg-1:  # reached number of averages
+                    data = data/number_avg #take average of data and save
+                    if smoothing_used == 1:  # if smoothing is checked smooth array
+                        dummy = np.ravel(data)
+                        for i in range(0,len(data)-smoothing_width,1):
+                            data[i] = sum(np.ones(smoothing_width)*dummy[i:i+smoothing_width])/(smoothing_width)
+            data = data-data_dark        
+            return data
             
         def OpenFile():
             global save_file
@@ -237,6 +312,40 @@ class Main_GUI:
                 self.add_remove_button.config(state = NORMAL)
             except:
                 pass
+            
+        def autorange():
+            settings = settings_read()
+            max_autorange = int(settings[7][1])
+            autorange_thresh = int(settings[6][1])
+            integ_time = int(settings[3][1])
+            pulses = int(settings[1][1])
+            plt.clf()
+            max_data = 0
+            # acquire data for the given # of loops plot, and prompt user to
+            # select plots they wish to save with a popup window
+            for x in range(0,max_autorange): 
+                settings[1][1] = pulses
+                # write settings array to csv 
+                settings_write(settings)
+                data = acquire_avg()
+                if max(data) < autorange_thresh:  
+                    if x == max_autorange-1:
+                        messagebox.showinfo("Pulses", "Max # of Pulses reached")
+                    else:
+                        pulses = pulses+1
+                        plt.plot(wavelength,data, label = "Pulses: "+ str(settings[1][1]))
+                        plt.subplots_adjust(bottom=0.14, right=0.83)
+                        plt.legend(loc = "center right", prop={'size': 6}, bbox_to_anchor=(1.185, 0.5))
+                        fig.canvas.draw()
+                else:
+                    settings[1][1] = pulses
+                    settings_write(settings)
+                    #df_max = pd.DataFrame(max_data)
+                    #df['max_data'] = df_max
+                    #df.to_csv("/home/pi/Desktop/Spectrometer/max_data", mode = 'w', index = False)
+                    messagebox.showinfo("Pulses", str(settings[1][1]-1) + "  Pulses to reach threshold")
+                    break
+            
         def open_loop():
                 settings = settings_read()
                 number_loops = int(settings[13][1])
@@ -274,7 +383,7 @@ class Main_GUI:
                     #check if the data headers is empty to set to none for future plotting
                     df.to_csv(save_file, mode = 'w', index = False) 
                     open_loop_window.destroy()
-                def select_all():
+                def select_all(): 
                     lb.select_set(0, END)
                 def unselect_all():
                     lb.select_clear(0, END)
@@ -317,6 +426,7 @@ class Main_GUI:
             fig.canvas.draw()
             scan_number = 1 + scan_number
             self.ratio_view_button.config(state = NORMAL)
+            
         def acquire():
             data = acquire_avg()
             # save current spectra then draw on canvas 
@@ -347,6 +457,7 @@ class Main_GUI:
             global data_headers
             plt.clf()
             data = pd.read_csv(save_file, header = 0)
+            #take reference as the last saved reference
             ref = data[['Reference %d' %(reference_number-1)]].to_numpy()
             data_ratio = df[['Scan_ID %d' %(scan_number-1)]].to_numpy()
             ratio = np.true_divide(ref,data_ratio)*100
@@ -389,6 +500,11 @@ class Main_GUI:
                 fig.canvas.draw()
             else:
                 pass
+            
+        #def sequence():
+            
+        #def sequence_save():
+            
               
         ### read in default settings
         settings_open = open(settings_file, 'r')
@@ -414,8 +530,14 @@ class Main_GUI:
         B3 = float(settings[18][1])/1000000
         B4 = float(settings[19][1])/1000000000
         B5 = float(settings[20][1])/1000000000000
-        pixel = np.arange(1,289)
-        #wavelength = A + B1*pixel + B2*pixel**2 + B3*pixel**3 + B4*pixel**4+ B5*pixel**5
+        burst_delay = float(settings[21][1])
+        burst_number = int(settings[22][1])
+        
+        global wavelength
+        #initialize wavelength array with zeros then solve given pixel coefficients
+        wavelength = np.zeros(288)
+        for pixel in range(1,289,1):
+            wavelength[pixel-1] = A + B1*pixel + B2*(pixel**2) + B3*(pixel**3) + B4*(pixel**4) + B5*(pixel**5)
         
         #create all the buttons onto to the main window
         # with all their corresponding functions (command)
@@ -446,7 +568,7 @@ class Main_GUI:
         self.acquire_save_button = Button(root, text = "Acquire and Save", fg = 'black', wraplength = 80, command = acquire_save, width = 10, height = 3, state = DISABLED)
         self.acquire_save_button.place(x = left_corner, y = 140)
         
-        self.autorange_button = Button(root, text = "Auto-Range", fg = 'black', wraplength = 80, command = smoothing, width = 10, height = 3)
+        self.autorange_button = Button(root, text = "Auto-Range", fg = 'black', wraplength = 80, command = autorange, width = 10, height = 3)
         self.autorange_button.place(x = left_corner, y = 205)
         
         self.open_loop_button = Button(root, text = "Open Loop", fg = 'black',state = DISABLED, command = open_loop, width = 10, height = 3)
@@ -507,23 +629,24 @@ class Main_GUI:
         toolbar.update()
         canvas.get_tk_widget().pack()
         sleep(1)
+        
           
     def settings_window(self):
-        self.setting_window = Toplevel(root)
-        self.setting_window.title('Settings')
-        self.setting_window.configure(bg= "sky blue")
+        self.settings_popup = Toplevel(root)
+        self.settings_popup.title('Settings')
+        self.settings_popup.configure(bg= "sky blue")
         if full_screen == True:
-            self.setting_window.attributes('-fullscreen', True) # Fullscreen on touch screen
+            self.settings_popup.attributes('-fullscreen', True) # Fullscreen on touch screen
         else:
-            self.setting_window.geometry('800x480') # PC size of the touch screen window
+            self.settings_popup.geometry('800x480') # PC size of the touch screen window
         
-        quit_button = Button(self.setting_window, text = "Back", fg = 'Red', command = self.setting_window.destroy, width = 10, height = 3)
+        quit_button = Button(self.settings_popup, text = "Back", fg = 'Red', command = self.settings_popup.destroy, width = 10, height = 3)
         quit_button.place(x = 600, y = 245)
         
-        save_button = Button(self.setting_window, text = "Save", fg = 'Green', command = self.settings_write, width = 10, height = 3)
+        save_button = Button(self.settings_popup, text = "Save", fg = 'Green', command = self.settings_write, width = 10, height = 3)
         save_button.place(x = 600, y = 310)
         
-        default_button = Button(self.setting_window, text = "Reset To Default Settings", command = self.default, width = 10, height = 3, wraplength = 85)
+        default_button = Button(self.settings_popup, text = "Reset To Default Settings", command = self.default, width = 10, height = 3, wraplength = 85)
         default_button.place(x = 600 , y = 375)
         
         #read in settings
@@ -550,12 +673,44 @@ class Main_GUI:
         b_3 = str(settings[18][1])
         b_4 = str(settings[19][1])
         b_5 = str(settings[20][1])
+        burst_delay_sec = float(settings[21][1])
+        burst_number = int(settings[22][1])
+        global measurement_burst
+        global pulse_burst
+        measurement_burst = ["" for x in range(burst_number)]
+        pulse_burst = ["" for x in range(burst_number)]
+        
+        '''
+        # get all values from the entry boxes and save to settings CSV file
+        for x in range(0,burst_number):
+            settings[23][1+x] = int()
+                               
+        settings_open = open(settings_file, 'w')
+        with settings_open:
+           csv_writer = csv.writer(settings_open, delimiter = ',')
+           csv_writer.writerows(settings)
+        '''
+        # try to read bursts settings from the csv, if it is empty it will cause
+        # an exception and write default values to those new bursts
+        for x in range(0,burst_number):
+            try:
+                measurement_burst[x] = "     " + str(settings[23+x][1]) + "     "
+                pulse_burst[x] = "     " + str(settings[33+x][1]) + "     "
+            except:
+                measurement_burst[x] = "     " + str(5) + "     "
+                pulse_burst[x] = "     " + str(1) + "     "
+        '''
+        except:
+            for x in range(0,burst_number):
+                measurement_burst[x] = "     " + str(5) + "     "
+                pulse_burst[x] = "     " + str(1) + "     "
+        '''
         
         
         # Start to create Frames for settings window
         left_side = 2
         # Single Acquisition Frame
-        single_acquisition_frame = Frame(self.setting_window, width = 350, height =120, background = "white")
+        single_acquisition_frame = Frame(self.settings_popup, width = 350, height =120, background = "white")
         single_acquisition_frame.place(x = left_side, y = 5)
         single_acquisition_label = Label(single_acquisition_frame, text = "Single Acquisition Settings", fg = "Black", bg= "white").grid(row = 0, column = 0, columnspan = 2)
         self.acquisition_number = IntVar()
@@ -595,7 +750,7 @@ class Main_GUI:
   
         
         # Lamp Frame
-        lamp = Frame(self.setting_window, width = 340, height = 75, background = "white")
+        lamp = Frame(self.settings_popup, width = 340, height = 75, background = "white")
         lamp.place(x = left_side, y = 195)
         lamp_label = Label(lamp, text = "Lamp", fg = "Black", bg = "White").grid(row = 0, column = 0, columnspan = 2)
         self.lamp_voltage = IntVar()
@@ -605,7 +760,7 @@ class Main_GUI:
         lamp_entry = Entry(lamp, textvariable = self.lamp_voltage, width = 8).grid(row = 1, column = 1, padx = 8, pady = 4)
         
         #AutoRange Frame 
-        Auto_range_frame = Frame(self.setting_window, width = 340, height = 100, background = "white")
+        Auto_range_frame = Frame(self.settings_popup, width = 340, height = 100, background = "white")
         Auto_range_frame.place(x = left_side, y = 255)
         auto_range_label = Label(Auto_range_frame, text = "Auto-Ranging:", fg = "Black", bg = "white").grid(row = 0, column = 0, columnspan = 2)
         self.threshold = IntVar()
@@ -620,8 +775,8 @@ class Main_GUI:
         max_pulses_entry_button.grid(row = 2, column = 0)
         max_pulses_entry = Entry(Auto_range_frame, textvariable = self.max_pulses, width = 8).grid(row = 2, column = 1, padx = 8, pady = 4)
         
-        # Graphing settings frame
-        graph_frame = Frame(self.setting_window, width = 340, height = 200, background = "white")
+        #_________________ Graph settings frame __________________
+        graph_frame = Frame(self.settings_popup, width = 340, height = 200, background = "white")
         graph_frame.place(x = left_side, y = 350)
         grpah_frame_label = Label(graph_frame, text = "Graphing Options:", fg = "Black", bg = "white").grid(row = 0, column = 0, columnspan = 2)
         self.smoothing = IntVar()
@@ -642,52 +797,53 @@ class Main_GUI:
         max_wavelength_entry_button.grid(row = 3, column = 0, pady = 2, padx = 3)
         max_wavelength_entry = Entry(graph_frame, textvariable = self.max_wavelength, width = 8).grid(row = 3, column = 1, padx = 8)
         
-        wavelength_pixel_frame = Frame(self.setting_window, width = 340, height =120, background = "white")
-        wavelength_pixel_frame.place(x = 325, y = 230)
+        #_________calibration Coefficients frame ______________________
+        wavelength_pixel_frame = Frame(self.settings_popup, width = 340, height =120, background = "white")
+        wavelength_pixel_frame.place(x = 325, y = 245)
         wavelength_pixel_label = Label(wavelength_pixel_frame, text = "Calibration Coefficients", fg = "Black", bg= "white", justify = CENTER).grid(row = 0, column = 0, columnspan = 3)
         self.a_0 = StringVar()
         self.a_0.set(a_0)
-        a0_button = Button(wavelength_pixel_frame, text = "A_0: ", fg = "Black", bg = "white", command = lambda: self.Num_Pad(13))
+        a0_button = Button(wavelength_pixel_frame, text = "A_0: ", fg = "Black", bg = "white", command = lambda: self.Num_Pad(15))
         a0_button.grid(row = 1, column = 0, pady = 2, padx = 3)
         a0_entry = Entry(wavelength_pixel_frame, textvariable = self.a_0, width = 16).grid(row = 1, column = 1, padx = 8)
         
         self.b_1 = StringVar()
         self.b_1.set(b_1)
-        b1_button = Button(wavelength_pixel_frame, text = "B_1: ", fg = "Black", bg = "white", command = lambda: self.Num_Pad(14))
+        b1_button = Button(wavelength_pixel_frame, text = "B_1: ", fg = "Black", bg = "white", command = lambda: self.Num_Pad(16))
         b1_button.grid(row = 2, column = 0, pady = 2, padx = 3)
         b1_entry = Entry(wavelength_pixel_frame, textvariable = self.b_1, width = 16).grid(row = 2, column = 1, padx = 8)
         
         self.b_2 = StringVar()
         self.b_2.set(b_2)
-        b2_button = Button(wavelength_pixel_frame, text = "B_2: ", fg = "Black", bg = "white", command = lambda: self.Num_Pad(15))
+        b2_button = Button(wavelength_pixel_frame, text = "B_2: ", fg = "Black", bg = "white", command = lambda: self.Num_Pad(17))
         b2_button.grid(row = 3, column = 0, pady = 2, padx = 3)
         b2_entry = Entry(wavelength_pixel_frame, textvariable = self.b_2, width = 16).grid(row = 3, column = 1, padx = 8)
         b2_exp_label = Label(wavelength_pixel_frame, text = "e-03", fg = "Black", bg= "white", justify = CENTER).grid(row = 3, column = 2, columnspan = 2)
         
         self.b_3 = StringVar()
         self.b_3.set(b_3)
-        b3_button = Button(wavelength_pixel_frame, text = "B_3: ", fg = "Black", bg = "white", command = lambda: self.Num_Pad(16))
+        b3_button = Button(wavelength_pixel_frame, text = "B_3: ", fg = "Black", bg = "white", command = lambda: self.Num_Pad(18))
         b3_button.grid(row = 4, column = 0, pady = 2, padx = 3)
         b3_entry = Entry(wavelength_pixel_frame, textvariable = self.b_3, width = 16).grid(row = 4, column = 1, padx = 8)
         b3_exp_label = Label(wavelength_pixel_frame, text = "e-06", fg = "Black", bg= "white", justify = CENTER).grid(row = 4, column = 2, columnspan = 2)
         
         self.b_4 = StringVar()
         self.b_4.set(b_4)
-        b4_button = Button(wavelength_pixel_frame, text = "B_4: ", fg = "Black", bg = "white", command = lambda: self.Num_Pad(17))
+        b4_button = Button(wavelength_pixel_frame, text = "B_4: ", fg = "Black", bg = "white", command = lambda: self.Num_Pad(19))
         b4_button.grid(row = 5, column = 0, pady = 2, padx = 3)
         b4_entry = Entry(wavelength_pixel_frame, textvariable = self.b_4, width = 16).grid(row = 5, column = 1, padx = 8)
         b4_exp_label = Label(wavelength_pixel_frame, text = "e-09", fg = "Black", bg= "white", justify = CENTER).grid(row = 5, column = 2, columnspan = 2)
         
         self.b_5 = StringVar()
         self.b_5.set(b_5)
-        b5_button = Button(wavelength_pixel_frame, text = "B_5: ", fg = "Black", bg = "white", command = lambda: self.Num_Pad(18))
+        b5_button = Button(wavelength_pixel_frame, text = "B_5: ", fg = "Black", bg = "white", command = lambda: self.Num_Pad(20))
         b5_button.grid(row = 6, column = 0, pady = 2, padx = 3)
         b5_entry = Entry(wavelength_pixel_frame, textvariable = self.b_5, width = 16).grid(row = 6, column = 1, padx = 8)
         b5_exp_label = Label(wavelength_pixel_frame, text = "e-12", fg = "Black", bg= "white", justify = CENTER).grid(row = 6, column = 2, columnspan = 2)
         
         #_______open Loop frame_______________
-        open_loop_frame = Frame(self.setting_window, width = 340, height =120, background = "white")
-        open_loop_frame.place(x = 325, y = 100)
+        open_loop_frame = Frame(self.settings_popup, width = 340, height =120, background = "white")
+        open_loop_frame.place(x = 325, y = 145)
         open_loop_label = Label(open_loop_frame, text = "Open Loop Settings",fg = "Black", bg = "white")
         open_loop_label.grid(row = 0, column = 0, columnspan = 3)
         
@@ -703,10 +859,38 @@ class Main_GUI:
         open_loop_pulse_number_button.grid(row = 2, column = 0, padx = 3, pady = 3)
         open_loop_pulse_entry = Entry(open_loop_frame, textvariable = self.open_loop_pulse_number, width = 8).grid(row = 2, column = 1, padx = 8)
         
+        #___________ sequence Frame _______________________
+        sequence_frame = Frame(self.settings_popup, width = 340, height =120, background = "white")
+        sequence_frame.place(x = 325, y = 5)
+        sequence_label = Label(sequence_frame, text = "Sequence Settings",fg = "Black", bg = "white")
+        sequence_label.grid(row = 0, column = 0, columnspan = 3)
         
+        self.burst_number = IntVar()
+        self.burst_number.set(burst_number)
+        burst_number_button = Button(sequence_frame, text = "# of Bursts: ", fg = 'black', bg = "white", command = lambda: self.Num_Pad(22))
+        burst_number_button.grid(row = 1, column = 0, padx = 3, pady = 3)
+        burst_number_entry = Entry(sequence_frame, textvariable = self.burst_number, width = 8).grid(row = 1, column = 1, padx = 8)
         
+        self.burst_delay_number = StringVar()
+        self.burst_delay_number.set(burst_delay_sec)
+        burst_delay_button = Button(sequence_frame, text = "Interburst delay: ", fg = 'black', bg = "white", command = lambda: self.Num_Pad(21))
+        burst_delay_button.grid(row = 2, column = 0, padx = 3, pady = 3)
+        burst_delay_entry = Entry(sequence_frame, textvariable = self.burst_delay_number, width = 8).grid(row = 2, column = 1, padx = 8)
         
+        #___________burst Frame ______________
+        self.burst_frame = Frame(self.settings_popup, width = 340, height =120, background = "white")
+        self.burst_frame.place(x = 585, y = 5)
+        number_measurements_burst_label = Label(self.burst_frame, justify = CENTER, wraplength = 100, text = "  # Measurements   ",fg = "Black", bg = "white",borderwidth=1, relief="solid")
+        number_measurements_burst_label.grid(row = 0, column = 0, padx = 4, pady = 3)
+        pulses_per_burst_label = Label(self.burst_frame,justify = CENTER, wraplength = 100, text = "  Pulses per Measurement    ",fg = "Black", bg = "white", borderwidth=1, relief="solid")
+        pulses_per_burst_label.grid(row = 0, column = 1, padx = 4, pady = 3)
         
+        for x in range(0,burst_number):
+            measurement_burst_button = Button(self.burst_frame, text = measurement_burst[x], fg = 'black', bg = "white", command = lambda x =x: self.Num_Pad(23+x))
+            measurement_burst_button.grid(row = 2+x, column = 0, padx = 3, pady = 3)
+        
+            pulse_burst_button= Button(self.burst_frame, text = pulse_burst[x], fg = 'black', bg = "white", command = lambda x =x: self.Num_Pad(33+x))
+            pulse_burst_button.grid(row = 2+x, column = 1, padx = 3, pady = 3)
         
     def default(self):
         self.acquisition_number.set('1')
@@ -714,7 +898,7 @@ class Main_GUI:
         self.integ_time.set('100')
         self.dark_subtract.set('1')
         self.lamp_voltage.set('1000')
-        self.threshold.set('52000')
+        self.threshold.set('60000')
         self.smoothing.set('2')
         self.min_wavelength.set('300')
         self.max_wavelength.set('900')
@@ -722,12 +906,24 @@ class Main_GUI:
         self.smoothing_used.set('1')
         self.measurement_number.set('5')
         self.open_loop_pulse_number.set('1')
-        self.a_0.set('311.1585037')
-        self.b_1.set('2.70659433')
-        self.b_2.set('-1.292296203')
-        self.b_3.set('-6.644532253')
-        self.b_4.set('5.749476565')
-        self.b_5.set('9.954642163')
+        self.a_0.set('308.6578728')
+        self.b_1.set('2.715120910')
+        self.b_2.set('-1.581742352')
+        self.b_3.set('-3.645168780')
+        self.b_4.set('-6.471720765')
+        self.b_5.set('27.41135617')
+        self.burst_delay_number.set('1.0')
+        self.burst_number.set('1')
+        measurement_burst = "     " + str(5) + "     "
+        pulse_burst = "     " + str(1) + "     "
+        
+        #reset Bursts buttons 
+        measurement_burst_button = Button(self.burst_frame, text = measurement_burst, fg = 'black', bg = "white", command = lambda: self.Num_Pad(23))
+        measurement_burst_button.grid(row = 2, column = 0, padx = 3, pady = 3)
+        
+        pulse_burst_button= Button(self.burst_frame, text = pulse_burst, fg = 'black', bg = "white", command = lambda: self.Num_Pad(24))
+        pulse_burst_button.grid(row = 2, column = 1, padx = 3, pady = 3)
+        
         settings_open = open(settings_file, 'r')
         csv_reader = csv.reader(settings_open, delimiter=',')
         settings = list(csv_reader)
@@ -751,19 +947,38 @@ class Main_GUI:
         settings[18][1] = float(self.b_3.get())
         settings[19][1] = float(self.b_4.get())
         settings[20][1] = float(self.b_5.get())
+        settings[21][1] = float(self.burst_delay_number.get())
+        settings[22][1] = int(self.burst_number.get())
+        settings[23][1] = int(5)
+        settings[33][1] = int(1)
+        
         # write settings array to csv 
         settings_open = open(settings_file, 'w')
         with settings_open:
-           csv_writer = csv.writer(settings_open, delimiter = ',')
-           csv_writer.writerows(settings)
-        #print(settings)
+            csv_writer = csv.writer(settings_open, delimiter = ',')
+            csv_writer.writerows(settings)
+        
+        #set wavelength values for plotting
+        A = float(settings[15][1])
+        B1 = float(settings[16][1])
+        B2 = float(settings[17][1])/1000
+        B3 = float(settings[18][1])/1000000
+        B4 = float(settings[19][1])/1000000000
+        B5 = float(settings[20][1])/1000000000000
+        # solve for new wavelength array based on inputted wavelength coefficients
+        global wavelength
+        for pixel in range(1,289,1):
+            wavelength[pixel-1] = A + B1*pixel + B2*(pixel**2) + B3*(pixel**3) + B4*(pixel**4) + B5*(pixel**5)
+        #reset settings window
+        self.settings_popup.destroy()
+        self.settings_window()
         
     # setup number pad as toplevel window for settings window input 
     def Num_Pad(self, button_number):
         
         #number pad attributes
         num = StringVar()  # variable for extracting entry number
-        self.numpad = Toplevel(self.setting_window)
+        self.numpad = Toplevel(self.settings_popup)
         self.numpad.title('Input pad')
         
         self.numpad_frame = Frame(self.numpad, width = 230, height = 15).grid(row = 1, column = 0, columnspan = 3)
@@ -781,31 +996,34 @@ class Main_GUI:
             
         def backspace():
             global current
-            current = current = current[:-1] # Remove last digit
+            current = current[:-1] # Remove last digit
             num.set(current)
         
         def num_pad_save(button_number):
-            try:
-                self.setting_window.destroy()
-                settings_open = open(settings_file, 'r')
-                csv_reader = csv.reader(settings_open, delimiter=',')
-                settings = list(csv_reader)
-                # read in settings to particular button ID on settings page
-                if button_number<15:
-                    settings[button_number][1]  = int(num.get())
-                else:
-                    settings[button_number][1]  = float(num.get())
+            
+            self.settings_popup.destroy()
+            settings_open = open(settings_file, 'r')
+            csv_reader = csv.reader(settings_open, delimiter=',')
+            settings = list(csv_reader)
+            # read in settings to particular button ID on settings page
+            if button_number<15 or button_number>21:
+                # settings for the burst page that allows for 10 discrete values
+                settings[button_number][1]  = int(num.get())
+            else:
+                settings[button_number][1]  = float(num.get())
         
-                #write settings to csv file
-                settings_open = open(settings_file, 'w')
-                with settings_open:
-                    csv_writer = csv.writer(settings_open, delimiter = ',')
-                    csv_writer.writerows(settings)
-                self.numpad.destroy()
-                self.settings_window()
-            except:
+            #write settings to csv file
+            settings_open = open(settings_file, 'w')
+            with settings_open:
+                csv_writer = csv.writer(settings_open, delimiter = ',')
+                csv_writer.writerows(settings)
+            self.numpad.destroy()
+            self.settings_window()
+            '''
+            except TypeError:
                 messagebox.showerror("Error", "Input must be a valid integer or float")
                 self.settings_window()
+            '''
                 
         btn_list = [
         '7', '8', '9',
@@ -827,14 +1045,15 @@ class Main_GUI:
             if c>2:
                 c = 0
                 r+= 1
-        if button_number>14:
-            btn[12] = Button(self.numpad, text = '.', width = 6, height = 3)
-            btn[12].grid(row = 6, column = 0)
-            btn[13] = Button(self.numpad, text = 'Backspace', width = 16, height = 3)
-            btn[13].grid(row = 6, column = 1, columnspan = 2)
-            btn[12].configure(command = lambda: button_click('.'))
-            btn[13].configure(command = backspace)
-            self.numpad.geometry('230x350')
+        if button_number>15:
+            if button_number<22:
+                btn[12] = Button(self.numpad, text = '.', width = 6, height = 3)
+                btn[12].grid(row = 6, column = 0)
+                btn[13] = Button(self.numpad, text = 'Backspace', width = 16, height = 3)
+                btn[13].grid(row = 6, column = 1, columnspan = 2)
+                btn[12].configure(command = lambda: button_click('.'))
+                btn[13].configure(command = backspace)
+                self.numpad.geometry('230x350')
         else:
             self.numpad.geometry('230x290')
             
@@ -878,14 +1097,31 @@ class Main_GUI:
         settings[18][1] = float(self.b_3.get())
         settings[19][1] = float(self.b_4.get())
         settings[20][1] = float(self.b_5.get())
+        settings[21][1] = float(self.burst_delay_number.get())
+        settings[22][1] = int(self.burst_number.get())
+        global measurement_burst
+        global pulse_burst
+        for x in range(0,settings[22][1]):
+            settings[23+x][1] = measurement_burst[x]
+            settings[33+x][1] = pulse_burst[x]
         
-                               
                                
         settings_open = open(settings_file, 'w')
         with settings_open:
            csv_writer = csv.writer(settings_open, delimiter = ',')
            csv_writer.writerows(settings)
-        self.setting_window.destroy()
+        A = float(settings[15][1])
+        B1 = float(settings[16][1])
+        B2 = float(settings[17][1])/1000
+        B3 = float(settings[18][1])/1000000
+        B4 = float(settings[19][1])/1000000000
+        B5 = float(settings[20][1])/1000000000000
+        global wavelength
+        #initialize wavelength array with zeros then solve given pixel coefficients
+        wavelength = np.zeros(288)
+        for pixel in range(1,289,1):
+            wavelength[pixel-1] = A + B1*pixel + B2*(pixel**2) + B3*(pixel**3) + B4*(pixel**4) + B5*(pixel**5)
+        self.settings_popup.destroy()
         
     def key_pad(self,number):
         self.keypad = Toplevel(root)
@@ -936,6 +1172,12 @@ class Main_GUI:
                     df.columns = ['Wavelength (nm)']
                     save_csv = df.to_csv(save_file, mode = 'a', index=False)
                     root.title("ESS System Interface: " + save_file)
+                    # reset scan and ref number for saving data 
+                    global scan_number
+                    global reference_number
+                    scan_number = 1
+                    reference_number = 1
+                    
                     self.keypad.destroy()
                     self.acquire_save_button.config(state = DISABLED)
                     self.save_reference_button.config(state = NORMAL)
@@ -1088,12 +1330,6 @@ class Main_GUI:
         Unselect_all_button = Button(self.add_remove, text = 'Un-Select_all', width = 30, height = 2, command = unselect_all)
         Unselect_all_button.pack()
         
-        
-        
-        
-        
-        
-        
     def help_window(self):
         print(acquisition_number)
         
@@ -1104,13 +1340,14 @@ class Main_GUI:
         sleep(2)
         
         
-        
-        
     def quit_button(self):
-        ser.reset_output_buffer()
-        ser.reset_input_buffer()
-        ser.close()
-        root.destroy()
+        try:
+            ser.reset_output_buffer()
+            ser.reset_input_buffer()
+            ser.close()
+            root.destroy()
+        except:
+            root.destroy()
         
     def open_loop(self):
         print("open loop needs to be added")
