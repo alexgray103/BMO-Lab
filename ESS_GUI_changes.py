@@ -124,15 +124,10 @@ class Main_GUI:
             root.attributes('-fullscreen', True) # fullscreen on touchscreen
         else:
             root.geometry(self.screensize) # actual size of RPi touchscreen
-            root.geometry('1024x600')
+            root.geometry('800x480')
             #root.geometry('800x480')
         root.configure(bg= "sky blue")
         root.minsize(800,480) # min size the window can be dragged to
-        
-        # help with button layout
-        # this can be changed to use grid instead of place if needed
-        right_corner = 690
-        left_corner = 0
         
         # setup Serial port- these are two possible port names for the arduino attachement
         port = "/dev/ttyUSB0"
@@ -143,8 +138,7 @@ class Main_GUI:
             self.ser = serial.Serial(port2, baudrate = 115200, timeout =3)
         
         # allow time for serial port to initialize
-        sleep(1.5)
-        
+        sleep(0.5)
         
         #used for saving to csv with headers of increasing ID number
         self.scan_number = 1
@@ -164,11 +158,12 @@ class Main_GUI:
         self.exp_folder = None
         
         # Images for the helper page
-        self.auto_range_help = PhotoImage(file = '/home/pi/Desktop/BMO_Lab/Auto Range Schematic.png')
-        self.acquire_help = PhotoImage(file = '/home/pi/Desktop/BMO_Lab/Acquire Schematic.png')
-        self.open_loop_help = PhotoImage(file = '/home/pi/Desktop/BMO_Lab/Open Loop Schematic.png')
-        self.sequence_help = PhotoImage(file = '/home/pi/Desktop/BMO_Lab/Open Loop Schematic.png')
+        #self.auto_range_help = PhotoImage(file = '/home/pi/Desktop/BMO_Lab/Auto Range Schematic.png')
+        #self.acquire_help = PhotoImage(file = '/home/pi/Desktop/BMO_Lab/Acquire Schematic.png')
+        #self.open_loop_help = PhotoImage(file = '/home/pi/Desktop/BMO_Lab/Open Loop Schematic.png')
+        #self.sequence_help = PhotoImage(file = '/home/pi/Desktop/BMO_Lab/Open Loop Schematic.png')
         
+        self.help_window_image = PhotoImage(file = '/home/pi/Desktop/BMO_Lab/Help_window.png')        
         pixel = np.arange(0,288)
         '''
         A = 335.2446842
@@ -246,6 +241,36 @@ class Main_GUI:
                 settings = list(csv_reader)
                 return settings
             
+        def save_settings_var():
+            #read in settings and save them as attributes on main class GUI
+            settings = settings_read(self.settings_file)
+            self.pulse_number_var = int(settings[1][1])
+            self.pulse_rate_var = int(settings[2][1])
+            self.integration_time_var = int(settings[3][1])
+            self.dark_subtract_var = int(settings[4][1])
+            self.lamp_voltage_var = int(settings[5][1])
+            self.auto_threshold_var = int(settings[6][1])
+            self.max_autopulse_var = int(settings[7][1])
+            self.smoothing_half_var = int(settings[8][1])
+            self.min_wavelength_var = int(settings[9][1])
+            self.max_wavelength_var =  int(settings[10][1])
+            self.number_avg_var = int(settings[11][1])
+            self.smoothing_var = int(settings[12][1])
+            self.step_resolution_var = int(settings[13][1])
+            self.step_size_var = int(settings[14][1])
+            self.a0_var = float(settings[15][1])
+            self.b1_var = float(settings[16][1])
+            self.b2_var = float(settings[17][1])
+            self.b3_var = float(settings[18][1])
+            self.b4_var = float(settings[19][1])
+            self.b5_var = float(settings[20][1])
+            self.burst_delay_var = float(settings[21][1])
+            self.burst_number_var = int(settings[22][1])
+        
+        # save all settings as attributes to the main class
+        # for later use 
+        save_settings_var()
+        
         def settings_write(settings):
                 settings_open = open(self.settings_file, 'w')
                 with settings_open:
@@ -262,7 +287,6 @@ class Main_GUI:
             dark_subtract = int(settings[4][1])
             self.ser.write(b"set_integ %0.6f\n" % integ_time)
             self.ser.write(b"pulse 0\n")
-            sleep(0.5)
             # tell spectromter to send data
             data = 0
             data_dark = 0
@@ -275,15 +299,16 @@ class Main_GUI:
             data_dark = data_temp
             #if x == 0:  # reached number of averages
             #data_dark = data_dark #take average of data and save
-            if smoothing_used == 1:  # if smoothing is checked smooth array
+            if self.smoothing_var == 1:  # if smoothing is checked smooth array
                 dummy = np.ravel(data_dark)
-                for i in range(0,len(data_dark)-smoothing_width,1):
-                    data_dark[i] = sum(np.ones(smoothing_width)*dummy[i:i+smoothing_width])/(smoothing_width)
+                for i in range(0,len(data_dark)-self.smoothing_width_var,1):
+                    data_dark[i] = sum(np.ones(self.smoothing_width_var)
+                                       *dummy[i:i+self.smoothing_width_var])/(self.smoothing_width_var)
             return data_dark
                         
             
         def acquire_avg():  # function to acquire data from spectrometer (multiple scans)
-            # open settings and send integ time to spectrometer 
+            # open settings and send integ time to spectrometer
             settings = settings_read(self.settings_file)
             number_avg = int(settings[11][1])
             integ_time = int(settings[3][1])
@@ -292,29 +317,29 @@ class Main_GUI:
             pulses = int(settings[1][1])
             dark_subtract = int(settings[4][1])
             
-            if dark_subtract == 1:
+            if self.dark_subtract_var == 1:
                data_dark = dark_subtract_func(smoothing_width)
-            else:
+            else: 
                 data_dark = 0
                 
-            self.ser.write(b"set_integ %0.6f\n" % integ_time)
-            self.ser.write(b"pulse %d\n" % pulses)
-            sleep(0.5)
+            self.ser.write(b"set_integ %0.6f\n" % self.integration_time_var)
+            self.ser.write(b"pulse %d\n" % self.pulse_number_var)
+            
             # tell spectromter to send data
             data = 0
-            for x in range(0,number_avg,1): #take scans then average
+            for x in range(0,self.number_avg_var,1): #take scans then average
                 self.ser.write(b"read\n")
-                #read data and save to pseudo csv to plot
                 data_read = self.ser.readline()
                 #data = self.ser.read_until('\n', size=None)
                 data_temp = np.array([int(p) for p in data_read.split(b",")])
                 data = data + data_temp
                 if x == number_avg-1:  # reached number of averages
                     data = data/number_avg #take average of data and save
-                    if smoothing_used == 1:  # if smoothing is checked smooth array
+                    if self.smoothing_var == 1:  # if smoothing is checked smooth array
                         dummy = np.ravel(data)
-                        for i in range(0,len(data)-smoothing_width,1):
-                            data[i] = sum(np.ones(smoothing_width)*dummy[i:i+smoothing_width])/(smoothing_width)
+                        for i in range(0,len(data)-self.smoothing_width_var,1):
+                            data[i] = sum(np.ones(self.smoothing_width_var)
+                                          *dummy[i:i+smoothing_width_var])/(smoothing_width_var)
             data = data-data_dark        
             return data
             
@@ -396,7 +421,8 @@ class Main_GUI:
                     settings_write(settings)
                     messagebox.showinfo("Pulses", str(settings[1][1]) + "  Pulses to reach threshold")
                     break
-                
+        
+        # allows for switching of button state from pressed to released
         def open_loop_state():
             if self.open_loop_stop is not None:
                 self.open_loop_button.config(command = open_loop, relief = RAISED, bg = 'light grey')
@@ -417,6 +443,7 @@ class Main_GUI:
                 plt.xlabel('Wavelength (nm)')
                 plt.clf()
                 data = acquire_avg()
+                np.savetxt(file_acquire, data, fmt="%d", delimiter=",")
                 plt.plot(self.wavelength,data)
                 plt.subplots_adjust(bottom=0.14, right=0.86)
                 self.fig.canvas.draw()
@@ -641,9 +668,81 @@ class Main_GUI:
             self.reference_number = 1 + self.reference_number
             '''
             
-        def pump(): 
-            print("add water pump functionality")
+        def scan(save): 
+            self.scan_file = []
+            #sequence and save prompts user to input new file name
+            #that will create new folder or go into experiment folder w/ sequence data
+            if save:
+                self.key_pad(4)
+                root.wait_window(self.keypad) #wait until folder name is entered to take measurments 
+                    
+            # open settings and send integ time to spectrometer 
+            settings = settings_read(self.settings_file)
+            plt.clf()
+            number_avg = int(settings[11][1])
+            integ_time = int(settings[3][1])
+            smoothing_used = int(settings[12][1])
+            smoothing_width = int(settings[8][1])            
+            dark_subtract = int(settings[4][1])
+            burst_number = int(settings[22][1])
+            burst_delay = float(settings[21][1])
             
+            if self.autoscale_button['relief'] != SUNKEN: # if autoscale is not active then change y axis limits
+                plt.ylim((0,66500))
+            plt.xlim(int(settings[9][1]), int(settings[10][1])) # change x axis limits to specified settings
+            #loop through the number of bursts and measurements per burst then send that info to spectrometer
+            # and take measurements
+            '''
+            for burst in range(0,burst_number):
+                number_measurements = int(settings[23+burst][1])
+                measurement = 0
+                for i in range(0,number_measurements):
+                    if dark_subtract == 1:
+                        data_dark = dark_subtract_func(smoothing_width)
+                    else:
+                        data_dark = 0
+                    graph_label = 'burst #' + str(burst+1) + ' measurement #' + str(i+1)
+                    pulses = int(settings[33+burst][1])
+                    self.ser.write(b"set_integ %0.6f\n" % integ_time)
+                    self.ser.write(b"pulse %d\n" % pulses)
+                    sleep(0.5)
+                    # tell spectromter to send data
+                    data = 0
+                    for x in range(0,number_avg,1): #take scans then average
+                        self.ser.write(b"read\n")
+                        #read data and save to pseudo csv to plot
+                        data_read = self.ser.readline()
+                        #data = self.ser.read_until('\n', size=None)
+                        data_temp = np.array([int(i) for i in data_read.split(b",")])
+                        data = data + data_temp
+                        if x == number_avg-1:  # reached number of averages
+                            data = data/number_avg #take average of data and save
+                            if smoothing_used == 1:  # if smoothing is checked smooth array
+                                dummy = np.ravel(data)
+                                for i in range(0,len(data)-smoothing_width,1):
+                                    data[i] = sum(np.ones(smoothing_width)*dummy[i:i+smoothing_width])/(smoothing_width)
+                    data = data-data_dark
+            '''
+            # iterate through x and y on steppers
+            for x in range(0,20):
+                for y in range(0,20):
+                    data = acquire_avg()
+                    df_data_array = pd.DataFrame(data)
+                    self.df_scan['X: %d Y: %d' % (x, y)] = df_data_array
+                    if (x % 2) == 0:
+                        self.ser.write(b"y+\n") # move in y after one scan
+                    else:
+                        self.ser.write(b"y-\n")
+                self.ser.write(b"x\n") # move in x after all y scans
+            # after all scans are taken and saved to array save to CSV then plot all
+            self.df_scan.to_csv(self.scan_file, mode = 'w', index = False)
+            data_pd = pd.read_csv(self.scan_file)
+            # get col header names to add to listbox text
+            data_headers_dummy = list(data_pd.columns.values)
+            for col in range(1, len(data_headers_dummy),1):
+                plt.plot(self.wavelength, self.df_scan[data_headers_dummy[col]])
+                self.fig.canvas.draw()
+                
         def sequence(save):
             self.sequence_file = []
             #sequence and save prompts user to input new file name
@@ -680,7 +779,6 @@ class Main_GUI:
                     pulses = int(settings[33+burst][1])
                     self.ser.write(b"set_integ %0.6f\n" % integ_time)
                     self.ser.write(b"pulse %d\n" % pulses)
-                    sleep(0.5)
                     # tell spectromter to send data
                     data = 0
                     for x in range(0,number_avg,1): #take scans then average
@@ -779,10 +877,10 @@ class Main_GUI:
         self.sequence_button = Button(root, text = "Sequence", fg = 'black', wraplength = 80, command = lambda: sequence(save = False), width = button_width, height = button_big_height)
         self.sequence_button.grid(row = 5, column = 0, sticky = sticky_to)
         
-        self.sequence_save_button = Button(root, text = "Sequence and Save", fg = 'black', wraplength = 80, command = lambda: sequence(save =True), width = button_width, height = button_big_height)
-        self.sequence_save_button.grid(row = 6, column = 0, sticky = sticky_to)
+        self.scan_button = Button(root, text = "Sequence and Save", fg = 'black', wraplength = 80, command = lambda: sequence(save =True), width = button_width, height = button_big_height)
+        self.scan_button.grid(row = 6, column = 0, sticky = sticky_to)
         
-        self.water_pump_button = Button(root, text = "Pump", fg = 'black', wraplength = 80, command = pump, width = button_width, height = button_small_height)
+        self.water_pump_button = Button(root, text = "Scan", fg = 'black', wraplength = 80, command = lambda: scan(save = True), width = button_width, height = button_small_height)
         self.water_pump_button.grid(row = 6, column = 1, padx = 1, sticky = sticky_to)
         
         self.ratio_view_button = Button(root, text = "Ratio View", fg = 'black', wraplength = 80, command = ratio_view, width = button_width, height = button_small_height, state = DISABLED)
@@ -804,10 +902,10 @@ class Main_GUI:
         self.graph_frame = Frame(root, background = "white")
         self.graph_frame.grid(row = 1, column = 1, columnspan = 6, rowspan = 5, padx = 1, pady = 3, sticky = sticky_to)
         
-        #initalize figure with size and pixel parameters 
+        #initalize figure
         self.fig = plt.figure()
             
-        #initalize canvas for plotting 
+        #initalize canvas for plotting
         canvas = FigureCanvasTkAgg(self.fig, master=self.graph_frame)  # A tk.DrawingArea.
         
         # create toolbar for canvas
@@ -830,18 +928,15 @@ class Main_GUI:
             
         sticky_to = "nsew"
         frame_padding = 5
+        
+        
+        
+        label = Label(self.help_window, image = self.help_window_image)
+        label.pack()
+        
         back_button = Button(self.help_window, text = 'Back', fg = 'red', command = self.help_window.destroy)
-        back_button.grid(row = 0, column = 0)
+        back_button.pack()
         
-        
-        label = Label(self.help_window, image = self.auto_range_help)
-        label.grid(row = 0, column =1)
-        
-        label = Label(self.help_window, image = self.open_loop_help)
-        label.grid(row = 1, column =0)
-        
-        label = Label(self.help_window, image = self.seqeunce_help)
-        label.grid(row = 1, column =1)
         
         
     def settings_window(self):
@@ -891,8 +986,8 @@ class Main_GUI:
         max_wavelength = int(settings[10][1])
         average_scans = int(settings[11][1])
         smoothing_used = int(settings[12][1])
-        open_measurements = int(settings[13][1])
-        open_pulses = int(settings[14][1])
+        step_resolution = int(settings[13][1])
+        grid_size = int(settings[14][1])
         a_0 = str(settings[15][1])
         b_1 = str(settings[16][1])
         b_2 = str(settings[17][1])
@@ -1087,24 +1182,24 @@ class Main_GUI:
         b5_exp_label.grid(row = 6, column = 2, sticky = sticky_to)
         
         #_______open Loop frame_______________
-        open_loop_frame = Frame(self.settings_popup, width = 340, height =120, background = frame_background)
+        stepper_frame = Frame(self.settings_popup, width = 340, height =120, background = frame_background)
         #open_loop_frame.place(x = 325, y = 145)
-        open_loop_frame.grid(row = 1, column = 1, sticky = sticky_to, padx = frame_padding, pady=frame_padding)
-        open_loop_label = Label(open_loop_frame, text = "Open Loop Settings",fg = fground, bg = frame_background)
-        open_loop_label.grid(row = 0, column = 0, columnspan = 2, sticky = sticky_to)
+        stepper_frame.grid(row = 1, column = 1, sticky = sticky_to, padx = frame_padding, pady=frame_padding)
+        stepper_label = Label(stepper_frame, text = "Scan Settings",fg = fground, bg = frame_background)
+        stepper_label.grid(row = 0, column = 0, columnspan = 2, sticky = sticky_to)
         
-        self.measurement_number = IntVar()
-        self.measurement_number.set(open_measurements)
-        measurement_number_button = Button(open_loop_frame, text = "# of Measurements: ", fg = 'black', bg = button_background, command = lambda: self.Num_Pad(13))
-        measurement_number_button.grid(row = 1, column = 0, padx = 3, pady = 3, sticky = sticky_to)
-        number_measurement_entry = Entry(open_loop_frame, textvariable = self.measurement_number, justify = CENTER)
-        number_measurement_entry.grid(row = 1, column = 1, padx = 8, sticky = sticky_to)
+        self.step_size = IntVar()
+        self.step_size.set(step_resolution)
+        step_size_button = Button(stepper_frame, text = "Step Size (um)", fg = 'black', bg = button_background, command = lambda: self.Num_Pad(13))
+        step_size_button.grid(row = 1, column = 0, padx = 3, pady = 3, sticky = sticky_to)
+        step_size_entry = Entry(stepper_frame, textvariable = self.step_size, justify = CENTER)
+        step_size_entry.grid(row = 1, column = 1, padx = 8, sticky = sticky_to)
         
-        self.open_loop_pulse_number = IntVar()
-        self.open_loop_pulse_number.set(open_pulses)
-        open_loop_pulse_number_button = Button(open_loop_frame, text = "# of Pulses: ", fg = 'black', bg = button_background, command = lambda: self.Num_Pad(14))
-        open_loop_pulse_number_button.grid(row = 2, column = 0, padx = 3, pady = 3, sticky = sticky_to)
-        open_loop_pulse_entry = Entry(open_loop_frame, textvariable = self.open_loop_pulse_number, justify = CENTER)
+        self.grid_size = IntVar()
+        self.grid_size.set(grid_size)
+        grid_size_button = Button(stepper_frame, text = "Grid Size", fg = 'black', bg = button_background, command = lambda: self.Num_Pad(14))
+        grid_size_button.grid(row = 2, column = 0, padx = 3, pady = 3, sticky = sticky_to)
+        open_loop_pulse_entry = Entry(stepper_frame, textvariable = self.grid_size, justify = CENTER)
         open_loop_pulse_entry.grid(row = 2, column = 1, padx = 8, sticky = sticky_to)
         
         #___________ sequence Frame _______________________
@@ -1159,8 +1254,8 @@ class Main_GUI:
         graph_frame.grid_rowconfigure((0,1,2,3),weight = 1)
         wavelength_pixel_frame.grid_columnconfigure((0,1,2),weight = 1)
         wavelength_pixel_frame.grid_rowconfigure((0,1,2,3,4,5,6),weight = 1)
-        open_loop_frame.grid_columnconfigure((0,1),weight = 1)
-        open_loop_frame.grid_rowconfigure((0,1,2),weight = 1)
+        stepper_frame.grid_columnconfigure((0,1),weight = 1)
+        stepper_frame.grid_rowconfigure((0,1,2),weight = 1)
         sequence_frame.grid_columnconfigure((0,1),weight = 1)
         sequence_frame.grid_rowconfigure((0,1,2),weight = 1)
         self.burst_frame.grid_columnconfigure((0,1),weight = 1)
@@ -1181,8 +1276,8 @@ class Main_GUI:
         self.max_wavelength.set('900')
         self.average_scans.set('2')
         self.smoothing_used.set('1')
-        self.measurement_number.set('5')
-        self.open_loop_pulse_number.set('1')
+        self.step_size.set('500')
+        self.grid_size.set('10')
         self.a_0.set('308.6578728')
         self.b_1.set('2.715120910')
         self.b_2.set('-1.581742352')
@@ -1191,8 +1286,8 @@ class Main_GUI:
         self.b_5.set('27.41135617')
         self.burst_delay_number.set('1.0')
         self.burst_number.set('1')
-        self.measurement_burst = "     " + str(5) + "     "
-        self.pulse_burst = "     " + str(1) + "     "
+        self.measurement_burst = str(5)
+        self.pulse_burst = str(1) 
         
         #reset Bursts buttons 
         sticky_to = "nsew"
@@ -1217,8 +1312,8 @@ class Main_GUI:
         settings[10][1] = int(self.max_wavelength.get())
         settings[11][1] = int(self.average_scans.get())
         settings[12][1] = int(self.smoothing_used.get())
-        settings[13][1] = int(self.measurement_number.get())
-        settings[14][1] = int(self.open_loop_pulse_number.get())
+        settings[13][1] = int(self.step_size.get())
+        settings[14][1] = int(self.grid_size.get())
         settings[15][1] = float(self.a_0.get())
         settings[16][1] = float(self.b_1.get())
         settings[17][1] = float(self.b_2.get())
@@ -1381,8 +1476,8 @@ class Main_GUI:
         settings[10][1] = int(self.max_wavelength.get())
         settings[11][1] = int(self.average_scans.get())
         settings[12][1] = int(self.smoothing_used.get())
-        settings[13][1] = int(self.measurement_number.get())
-        settings[14][1] = int(self.open_loop_pulse_number.get())
+        settings[13][1] = int(self.step_size.get())
+        settings[14][1] = int(self.grid_size.get())
         settings[15][1] = float(self.a_0.get())
         settings[16][1] = float(self.b_1.get())
         settings[17][1] = float(self.b_2.get())
@@ -1396,7 +1491,7 @@ class Main_GUI:
             settings[23+x][1] = int(self.measurement_burst[x])
             settings[33+x][1] = int(self.pulse_burst[x])
         
-                               
+        #save_settings_var() # save settings to main class attributes   
         settings_open = open(self.settings_file, 'w')
         with settings_open:
            csv_writer = csv.writer(settings_open, delimiter = ',')
@@ -1407,6 +1502,8 @@ class Main_GUI:
         B3 = float(settings[18][1])/1000000
         B4 = float(settings[19][1])/1000000000
         B5 = float(settings[20][1])/1000000000000
+        
+        
         #global wavelength
         #initialize wavelength array with zeros then solve given pixel coefficients
         self.wavelength = np.zeros(288)
@@ -1423,18 +1520,18 @@ class Main_GUI:
     def key_pad(self,number):
         self.keypad = Toplevel(root)
         path = '/home/pi/Desktop/Spectrometer/'
-        
+        big_font = ('Times New Roman', 24)
         
         self.keypad.title('Input New FileName into entry box')
         #if full_screen == True:
         #self.key_pad.attributes('-fullscreen', True) # fullscreen on touchscreen
         size = str(self.w-300) + 'x' + str(self.h - 300)
-        self.keypad.geometry(size)
+        self.keypad.geometry('680x400')
             
         keypad_frame = Frame(self.keypad)
-        keypad_frame.grid(row = 0, column = 3, columnspan = 4, sticky = 'nsew')
+        keypad_frame.grid(row = 0, column = 0, columnspan = 10, sticky = 'nsew')
         key = StringVar()
-        key_entry = Entry(keypad_frame, textvariable =key, justify = CENTER)
+        key_entry = Entry(keypad_frame, textvariable =key, font = big_font, justify = CENTER, )
         key_entry.grid(row = 0, column = 0, sticky = 'nsew')
         
         def press(letter):
@@ -1506,7 +1603,7 @@ class Main_GUI:
                 except ValueError:
                     self.keypad.destroy()
                     messagebox.showerror("Error", "File Name already Exists! Please enter New Filename")
-            else:  
+            elif number ==3:  
                 # if there is no experiment folder save to spectrometer main folder
                 if self.exp_folder is not None:
                     self.sequence_file = str(self.exp_folder + '/' + key.get() +'_sequence.csv')
@@ -1526,6 +1623,22 @@ class Main_GUI:
                     self.keypad.destroy()
                     messagebox.showerror("Error", "File Name already Exists! Please enter New Filename")
                 '''
+            elif number ==4:
+                 # if there is no experiment folder save to spectrometer main folder
+                if self.exp_folder is not None:
+                    self.scan_file = str(self.exp_folder + '/' + key.get() +'_scan.csv')
+                else:
+                    self.scan_file = str(self.folder+ '/' + key.get() +'_scan.csv')
+                    
+                open(self.scan_file, 'w+')
+                #create data frame for saving data to csv files
+                self.df_scan = pd.DataFrame(self.wavelength)
+                self.df_scan.columns = ['Wavelength (nm)']
+                scan_csv = self.df_scan.to_csv(self.scan_file, mode = 'a', index=False)
+                #root.title("ESS System Interface: " + self.scan_file)
+                #reset scan and ref number for saving data 
+                self.keypad.destroy()
+                
         btn_list = [
         '1', '2', '3', '4', '5', '6','7', '8', '9', '0',
         'Q', 'W', 'E','R', 'T', 'Y', 'U', 'I', 'O','P',
@@ -1820,3 +1933,12 @@ class Main_GUI:
 root = Tk()
 my_gui = Main_GUI(root)
 root.mainloop()
+'''
+try:
+    root = Tk()
+    my_gui = Main_GUI(root)
+    root.mainloop()
+except:
+    messagebox.showerror("Error", "Spectrometer Not connected. Connect and Try Again")
+    root.destroy()
+'''
