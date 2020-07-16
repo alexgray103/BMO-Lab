@@ -55,7 +55,7 @@ class key_pad:
             global filename
             global foldername
             path = '/home/pi/Desktop/Spectrometer/'
-            filename = str(self.key.get()+ '_' + 'save.csv')
+            filename = str(self.key.get())
             foldername = str(path + self.key.get())
             self.keypad.destroy()
             

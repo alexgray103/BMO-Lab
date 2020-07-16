@@ -11,7 +11,7 @@ class Settings:
         settings_open = open(self.settings_file, 'w', newline = '')
         csv_row = [('Settings', ''),('pulse',1),('pulse_rate',60),\
             ('integration_time',300),('dark_subtract',1),\
-            ('lamp_voltage',1000), ('autopulse_threshold',4000),\
+            ('lamp_voltage',1000), ('autopulse_threshold',60000),\
             ('max_autopulse_number',10),('smoothing_half_width',2),\
             ('min_wavelength',300),('max_wavelength',900),\
             ('Number_of_Averages', 2), ('smoothing', 1),\
@@ -57,4 +57,4 @@ class Settings:
         settings_open = open(self.settings_file, 'w')
         with settings_open:
             csv_writer = csv.writer(settings_open, delimiter = ',')
-            csv_writer.writerows(setting_array)
+            csv_writer.writerows(settings_array)

@@ -3,12 +3,15 @@ import csv
 from tkinter import *
 
 ########## Global Variables ##################
+global settings_file
+
 settings_file = '/home/pi/Desktop/Spectrometer/settings/settings.csv'
 
 
 
 class Num_Pad:
     def __init__(self, parent, button_number):
+        global number_save
         global settings_file
         self.settings_file = settings_file
         self.numpad = parent
@@ -20,7 +23,9 @@ class Num_Pad:
         self.numpad.geometry(numpad_size)
 
         number_entry = Entry(self.numpad, textvariable = num, justify = CENTER).grid(row = 0, column = 0, columnspan = 3, sticky = 'ew')
-        
+        self.numpad.grid_columnconfigure((0,1,2), weight = 1)
+        self.numpad.grid_rowconfigure((0,1,2,3,4), weight = 1)
+       
         def button_click(number):
             global current
             current = num.get() # save current entry value
@@ -37,8 +42,8 @@ class Num_Pad:
             num.set(current)
 
         def num_pad_save(button_number):
+            global number_save
             try:
-                self.numpad.destroy()
                 settings_open = open(self.settings_file, 'r')
                 csv_reader = csv.reader(settings_open, delimiter=',')
                 settings = list(csv_reader)
@@ -112,7 +117,5 @@ class Num_Pad:
         btn[10].configure(command = num_pad_delete)
         btn[11].configure(command = lambda: num_pad_save(button_number))
 
-        self.numpad.grid_columnconfigure((0,1,2), weight = 1)
-        self.numpad.grid_rowconfigure((0,1,2,3,4), weight = 1)
-
+        
         
