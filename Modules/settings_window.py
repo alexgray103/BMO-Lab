@@ -1,13 +1,20 @@
 from settings import Settings as _Settings
-from ESS_GUI_module import *
 from number_pad import *
 import csv
 import os
+import numpy as np
+
+# module connect functionality 
 from tkinter import *
+import ESS_GUI_module_0
+import ESS_GUI_module_1_v1
+
+import serial
+import matplotlib.pyplot as plt
+from time import sleep
 
 ########## global variables ######################
 settings_file = '/home/pi/Desktop/Spectrometer/settings/settings.csv'
-
 
 
 class settings_window:
@@ -18,15 +25,44 @@ class settings_window:
         self.settings_file = settings_file
         self.settings_popup.title('Settings')
         self.settings_popup.configure(bg= "sky blue")
-        full_screen = False
+        full_screen = True
         if full_screen == True:
             self.settings_popup.attributes('-fullscreen', True) # Fullscreen on touch screen
         else:
             self.settings_popup.geometry('600x480') # set the size of the monitor
         self.settings_buttons()     # actually create the buttons
         
+    def module_connect(self):
+
+        port = "/dev/ttyUSB0"
+        port2 = "/dev/ttyUSB1"
+        try:
+            ser = serial.Serial(port, baudrate = 115200, timeout = 3)
+        except:
+            ser = serial.Serial(port2, baudrate = 115200, timeout =3)
+
+        sleep(2.5) # wait for a little to initialize serial connection
+
+        ser.write(b'module\n')
+        module = int(ser.readline().decode()) # read in the module number
+        print(module)
+        self.master.destroy()
+        self.master.quit()
         
+        
+        if module == 0:
+            root = Tk()
+            app =  ESS_GUI_module_1_v1.Module_1(root)
+            root.mainloop()
+            
+        elif module == 1:
+            root = Tk()
+            app = Module_1(root)
+            root.mainloop()
+            
+            
     def settings_buttons(self):
+        myfont = font.Font(size = 9)
         sticky_to = "nsew"
         frame_padding = 5
         settings_button_frame = Frame(self.settings_popup, width = 350, height =120, background = "sky blue")
@@ -37,10 +73,13 @@ class settings_window:
         quit_button.grid(row = 1, column = 0, sticky = sticky_to)
         
         save_button = Button(settings_button_frame, text = "Save", fg = 'Green', command = self.settings_save, width = 22, height = 3)
-        save_button.grid(row = 0, column = 0, columnspan = 2, pady = 2, sticky = sticky_to)
+        save_button.grid(row = 0, column = 0, columnspan = 3, pady = 2, sticky = sticky_to)
         
         default_button = Button(settings_button_frame, text = "Reset To Default Settings", command = self.default, width = 9, height = 3, wraplength = 85)
         default_button.grid(row = 1, column = 1, sticky = sticky_to)
+        
+        connect_module_button = Button(settings_button_frame, text = "Connect Module", command = self.module_connect, width = 9, height = 3, wraplength = 85)
+        connect_module_button.grid(row = 1, column = 2, sticky = sticky_to)
         
         #read in settings
         settings_open = open(self.settings_file, 'r')
@@ -101,14 +140,16 @@ class settings_window:
         single_acquisition_label.grid(row = 0, column = 0, columnspan = 2, sticky = sticky_to)
         self.acquisition_number = IntVar() 
         self.acquisition_number.set(pulse)
-        acq_number_button = Button(single_acquisition_frame, text = "Pulses:", fg = fground, bg = button_background, command = lambda: self.numpad_popup(self.settings_popup, 1))
+        acq_number_button = Button(single_acquisition_frame, text = "Pulses:", fg = fground, bg = button_background, font = myfont,
+                                   command = lambda: self.numpad_popup(self.settings_popup, 1))
         acq_number_button.grid(row = 1, column = 0, pady = 2, padx = 3, sticky = sticky_to)
         acq_number_entry = Entry(single_acquisition_frame, textvariable = self.acquisition_number, justify = CENTER)
         acq_number_entry.grid(row = 1, column = 1, padx = 14, pady = 2, sticky = sticky_to)
         
         self.pulse_rate = IntVar()
         self.pulse_rate.set(pulse_rate)
-        pulse_rate_button = Button(single_acquisition_frame, text = "Pulse Rate (Hz):", fg = fground, bg = button_background, command = lambda: self.numpad_popup(self.settings_popup, 2))
+        pulse_rate_button = Button(single_acquisition_frame, text = "Pulse Rate (Hz):", fg = fground, bg = button_background,
+                                   font = myfont, command = lambda: self.numpad_popup(self.settings_popup, 2))
         pulse_rate_button.grid(row = 2, column = 0, pady = 2, padx = 3, sticky = sticky_to)
         pulse_rate_entry = Entry(single_acquisition_frame, textvariable = self.pulse_rate, justify = CENTER)
         pulse_rate_entry.grid(row = 2, column = 1, padx = 14, pady = 2, sticky = sticky_to)
@@ -116,7 +157,7 @@ class settings_window:
         self.integ_time = IntVar()
         self.integ_time.set(integ_time)
         integ_time_button = Button(single_acquisition_frame, text = "Integration Time (usec):", fg = fground, bg = button_background,\
-                                   command = lambda: self.numpad_popup(self.settings_popup, 3))
+                                   font = myfont, command = lambda: self.numpad_popup(self.settings_popup, 3))
         integ_time_button.grid(row = 3, column = 0, pady = 2, padx = 3, sticky = sticky_to)
         integ_time_entry = Entry(single_acquisition_frame, textvariable = self.integ_time, justify = CENTER)
         integ_time_entry.grid(row = 3, column = 1, padx = 14,pady = 2, sticky = sticky_to)
@@ -124,7 +165,7 @@ class settings_window:
         self.average_scans = IntVar()
         self.average_scans.set(average_scans)
         average_scans_button = Button(single_acquisition_frame, text = "# of Averages:", fg = fground, bg = button_background,\
-                                   command = lambda: self.numpad_popup(self.settings_popup, 11))
+                                   font = myfont,command = lambda: self.numpad_popup(self.settings_popup, 11))
         average_scans_button.grid(row = 4, column = 0, pady = 2, padx = 3, sticky = sticky_to)
         average_scans_entry = Entry(single_acquisition_frame, textvariable = self.average_scans, justify = CENTER)
         average_scans_entry.grid(row = 4, column = 1, padx = 14, pady = 2, sticky = sticky_to)
@@ -139,38 +180,23 @@ class settings_window:
         smoothing_entry = Checkbutton(single_acquisition_frame, text = "Smoothing  ", variable = self.smoothing_used)
         smoothing_entry.grid(row = 5, column =1, pady = 2, padx = 14, sticky = sticky_to)
         
-        
-        #___________________ Lamp Frame _______________________________________
-        
-        lamp = Frame(self.settings_popup, width = 340, height = 75, background = frame_background)
-        #lamp.place(x = left_side, y = 195)
-        #lamp.grid(row = 1, column = 0, sticky = sticky_to, padx = frame_padding, pady=frame_padding)
-        
-        lamp_label = Label(lamp, text = "Lamp", fg = fground, bg = frame_background)
-        #lamp_label.grid(row = 0, column = 0, columnspan = 2, sticky = sticky_to)
-        self.lamp_voltage = IntVar()
-        self.lamp_voltage.set(lamp_voltage)
-        lamp_entry_button= Button(lamp, text = "Lamp Voltage (volts):", fg = fground, bg = button_background, command = lambda: self.numpad_popup(self.settings_popup, 5))
-        #lamp_entry_button.grid(row = 1, column = 0, pady = 2, padx = 3, sticky = sticky_to)
-        lamp_entry = Entry(lamp, textvariable = self.lamp_voltage, justify = CENTER)
-        #lamp_entry.grid(row = 1, column = 1, padx = 14, pady = 2, sticky = sticky_to)
-        
         #__________________AutoRange Frame ____________________
         Auto_range_frame = Frame(self.settings_popup, background = frame_background)
-        #Auto_range_frame.place(x = left_side, y = 255)
         Auto_range_frame.grid(row = 2, column =0, sticky = sticky_to, padx = frame_padding, pady=frame_padding)
         auto_range_label = Label(Auto_range_frame, text = "Auto-Ranging:", fg = fground, bg = frame_background)
         auto_range_label.grid(row = 0, column = 0, columnspan = 2, sticky = sticky_to)
         self.threshold = IntVar()
         self.threshold.set(auto_pulse_threshold)
-        autopulse_entry_button = Button(Auto_range_frame, text = "AutoPulse Threshold(counts):", fg = fground, bg = button_background, command = lambda: self.numpad_popup(self.settings_popup, 6))
+        autopulse_entry_button = Button(Auto_range_frame, text = "AutoPulse Threshold(counts):", fg = fground, font = myfont,
+                                        bg = button_background, command = lambda: self.numpad_popup(self.settings_popup, 6))
         autopulse_entry_button.grid(row = 1, column = 0, pady = 2, padx = 3, sticky = sticky_to)
         autopulse_entry = Entry(Auto_range_frame, textvariable = self.threshold, justify = CENTER)
         autopulse_entry.grid(row = 1, column = 1, padx = 8, sticky = sticky_to)
         
         self.max_pulses = IntVar()
         self.max_pulses.set(auto_pulse_max)
-        max_pulses_entry_button = Button(Auto_range_frame, text = "Max # of Pulses:", fg = fground, bg = button_background, command = lambda: self.numpad_popup(self.settings_popup, 7))
+        max_pulses_entry_button = Button(Auto_range_frame, text = "Max # of Pulses:", fg = fground, bg = button_background,
+                                         font = myfont,command = lambda: self.numpad_popup(self.settings_popup, 7))
         max_pulses_entry_button.grid(row = 2, column = 0, sticky = sticky_to, padx = 1, pady=1)
         max_pulses_entry = Entry(Auto_range_frame, textvariable = self.max_pulses, justify = CENTER)
         max_pulses_entry.grid(row = 2, column = 1, padx = 8, pady = 4, sticky = sticky_to)
@@ -184,21 +210,24 @@ class settings_window:
         graph_frame_label.grid(row = 0, column = 0, columnspan = 2, sticky = sticky_to)
         self.smoothing = IntVar()
         self.smoothing.set(smoothing_half_width)
-        smoothing_entry_button = Button(graph_frame, text = "Smoothing Half-Width (pixels):", fg = fground, bg = button_background, command = lambda: self.numpad_popup(self.settings_popup, 8))
+        smoothing_entry_button = Button(graph_frame, text = "Smoothing Half-Width (pixels):", fg = fground, bg = button_background,
+                                        font = myfont, command = lambda: self.numpad_popup(self.settings_popup, 8))
         smoothing_entry_button.grid(row = 1, column = 0, pady = 2, padx = 3, sticky = sticky_to)
         smoothing_entry = Entry(graph_frame, textvariable = self.smoothing, justify = CENTER)
         smoothing_entry.grid(row = 1, column = 1, padx = 8, sticky = sticky_to)
         
         self.min_wavelength = IntVar()
         self.min_wavelength.set(min_wavelength)
-        min_wavelength_entry_button = Button(graph_frame, text = "Min-Wavelength:", fg = fground, bg = button_background, command = lambda: self.numpad_popup(self.settings_popup, 9))
+        min_wavelength_entry_button = Button(graph_frame, text = "Min-Wavelength:", fg = fground, bg = button_background,
+                                             font = myfont,command = lambda: self.numpad_popup(self.settings_popup, 9))
         min_wavelength_entry_button.grid(row = 2, column = 0, pady = 2, padx = 3, sticky = sticky_to)
         min_wavelength_entry = Entry(graph_frame, textvariable = self.min_wavelength, justify = CENTER)
         min_wavelength_entry.grid(row = 2, column = 1, padx = 8, sticky = sticky_to)
         
         self.max_wavelength = IntVar()
         self.max_wavelength.set(max_wavelength)
-        max_wavelength_entry_button = Button(graph_frame, text = "Max-Wavelength:", fg = fground, bg = button_background, command = lambda: self.numpad_popup(self.settings_popup, 10))
+        max_wavelength_entry_button = Button(graph_frame, text = "Max-Wavelength:", fg = fground, bg = button_background,
+                                             font = myfont, command = lambda: self.numpad_popup(self.settings_popup, 10))
         max_wavelength_entry_button.grid(row = 3, column = 0, pady = 2, padx = 3, sticky = sticky_to)
         max_wavelength_entry = Entry(graph_frame, textvariable = self.max_wavelength, justify = CENTER)
         max_wavelength_entry.grid(row = 3, column = 1, padx = 8, sticky = sticky_to)
@@ -211,21 +240,24 @@ class settings_window:
         wavelength_pixel_label.grid(row = 0, column = 0, columnspan = 3, sticky = sticky_to)
         self.a_0 = StringVar()
         self.a_0.set(a_0)
-        a0_button = Button(wavelength_pixel_frame, text = "A_0: ", fg = fground, bg = button_background, command = lambda: self.numpad_popup(self.settings_popup, 15))
+        a0_button = Button(wavelength_pixel_frame, text = "A_0: ", fg = fground, bg = button_background,
+                           font = myfont,command = lambda: self.numpad_popup(self.settings_popup, 15))
         a0_button.grid(row = 1, column = 0, pady = 2, padx = 3, sticky = sticky_to)
         a0_entry = Entry(wavelength_pixel_frame, textvariable = self.a_0, width = 16)
         a0_entry.grid(row = 1, column = 1, padx = 8, sticky = sticky_to)
         
         self.b_1 = StringVar()
         self.b_1.set(b_1)
-        b1_button = Button(wavelength_pixel_frame, text = "B_1: ", fg = fground, bg = button_background, command = lambda: self.numpad_popup(self.settings_popup, 16))
+        b1_button = Button(wavelength_pixel_frame, text = "B_1: ", fg = fground, bg = button_background,
+                           font = myfont, command = lambda: self.numpad_popup(self.settings_popup, 16))
         b1_button.grid(row = 2, column = 0, pady = 2, padx = 3, sticky = sticky_to)
         b1_entry = Entry(wavelength_pixel_frame, textvariable = self.b_1, width = 16)
         b1_entry.grid(row = 2, column = 1, padx = 8, sticky = sticky_to)
         
         self.b_2 = StringVar()
         self.b_2.set(b_2)
-        b2_button = Button(wavelength_pixel_frame, text = "B_2: ", fg = fground, bg = button_background, command = lambda: self.numpad_popup(self.settings_popup, 17))
+        b2_button = Button(wavelength_pixel_frame, text = "B_2: ", fg = fground, bg = button_background,
+                           font = myfont, command = lambda: self.numpad_popup(self.settings_popup, 17))
         b2_button.grid(row = 3, column = 0, pady = 2, padx = 3, sticky = sticky_to)
         b2_entry = Entry(wavelength_pixel_frame, textvariable = self.b_2, width = 16)
         b2_entry.grid(row = 3, column = 1, padx = 8, sticky = sticky_to)
@@ -234,7 +266,8 @@ class settings_window:
         
         self.b_3 = StringVar()
         self.b_3.set(b_3)
-        b3_button = Button(wavelength_pixel_frame, text = "B_3: ", fg = fground, bg = button_background, command = lambda: self.numpad_popup(self.settings_popup, 18))
+        b3_button = Button(wavelength_pixel_frame, text = "B_3: ", fg = fground, bg = button_background,
+                           font = myfont, command = lambda: self.numpad_popup(self.settings_popup, 18))
         b3_button.grid(row = 4, column = 0, pady = 2, padx = 3, sticky = sticky_to)
         b3_entry = Entry(wavelength_pixel_frame, textvariable = self.b_3, width = 16)
         b3_entry.grid(row = 4, column = 1, padx = 8, sticky = sticky_to)
@@ -243,7 +276,8 @@ class settings_window:
         
         self.b_4 = StringVar()
         self.b_4.set(b_4)
-        b4_button = Button(wavelength_pixel_frame, text = "B_4: ", fg = fground, bg = button_background, command = lambda: self.numpad_popup(self.settings_popup, 19))
+        b4_button = Button(wavelength_pixel_frame, text = "B_4: ", fg = fground, bg = button_background,
+                           font = myfont, command = lambda: self.numpad_popup(self.settings_popup, 19))
         b4_button.grid(row = 5, column = 0, pady = 2, padx = 3, sticky = sticky_to)
         b4_entry = Entry(wavelength_pixel_frame, textvariable = self.b_4, width = 16)
         b4_entry.grid(row = 5, column = 1, padx = 8, sticky = sticky_to)
@@ -252,33 +286,35 @@ class settings_window:
         
         self.b_5 = StringVar()
         self.b_5.set(b_5)
-        b5_button = Button(wavelength_pixel_frame, text = "B_5: ", fg = fground, bg = button_background, command = lambda: self.numpad_popup(self.settings_popup, 20))
+        b5_button = Button(wavelength_pixel_frame, text = "B_5: ", fg = fground, bg = button_background,
+                           font = myfont, command = lambda: self.numpad_popup(self.settings_popup, 20))
         b5_button.grid(row = 6, column = 0, pady = 2, padx = 3, sticky = sticky_to)
         b5_entry = Entry(wavelength_pixel_frame, textvariable = self.b_5, width = 16)
         b5_entry.grid(row = 6, column = 1, padx = 8, sticky = sticky_to)
         b5_exp_label = Label(wavelength_pixel_frame, text = "e-12", fg = fground, bg= "white", justify = CENTER)
         b5_exp_label.grid(row = 6, column = 2, sticky = sticky_to)
         
-        #_______open Loop frame_______________
+        #_______Stepper frame_______________
         stepper_frame = Frame(self.settings_popup, width = 340, height =120, background = frame_background)
-        #open_loop_frame.place(x = 325, y = 145)
         stepper_frame.grid(row = 1, column = 1, sticky = sticky_to, padx = frame_padding, pady=frame_padding)
         stepper_label = Label(stepper_frame, text = "Scan Settings",fg = fground, bg = frame_background)
         stepper_label.grid(row = 0, column = 0, columnspan = 2, sticky = sticky_to)
         
         self.step_size = IntVar()
         self.step_size.set(step_resolution)
-        step_size_button = Button(stepper_frame, text = "Step Size (um)", fg = 'black', bg = button_background, command = lambda: self.numpad_popup(self.settings_popup, 13))
+        step_size_button = Button(stepper_frame, text = "Step Size (um)", fg = 'black', bg = button_background,
+                                  font = myfont, command = lambda: self.numpad_popup(self.settings_popup, 13))
         step_size_button.grid(row = 1, column = 0, padx = 3, pady = 3, sticky = sticky_to)
         step_size_entry = Entry(stepper_frame, textvariable = self.step_size, justify = CENTER)
         step_size_entry.grid(row = 1, column = 1, padx = 8, sticky = sticky_to)
         
         self.grid_size = IntVar()
         self.grid_size.set(grid_size)
-        grid_size_button = Button(stepper_frame, text = "Grid Size", fg = 'black', bg = button_background, command = lambda: self.numpad_popup(self.settings_popup, 14))
+        grid_size_button = Button(stepper_frame, text = "Grid Size", fg = 'black', bg = button_background,
+                                  font = myfont, command = lambda: self.numpad_popup(self.settings_popup, 14))
         grid_size_button.grid(row = 2, column = 0, padx = 3, pady = 3, sticky = sticky_to)
-        open_loop_pulse_entry = Entry(stepper_frame, textvariable = self.grid_size, justify = CENTER)
-        open_loop_pulse_entry.grid(row = 2, column = 1, padx = 8, sticky = sticky_to)
+        grid_size_entry = Entry(stepper_frame, textvariable = self.grid_size, justify = CENTER)
+        grid_size_entry.grid(row = 2, column = 1, padx = 8, sticky = sticky_to)
         
         #___________ sequence Frame _______________________
         sequence_frame = Frame(self.settings_popup, width = 340, height =120, background = frame_background)
@@ -289,34 +325,40 @@ class settings_window:
         
         self.burst_number = IntVar()
         self.burst_number.set(burst_number)
-        burst_number_button = Button(sequence_frame, text = "# of Bursts: ", fg = 'black', bg = button_background, command = lambda: self.numpad_popup(self.settings_popup, 22))
+        burst_number_button = Button(sequence_frame, text = "# of Bursts: ", fg = 'black', bg = button_background,
+                                     font = myfont, command = lambda: self.numpad_popup(self.settings_popup, 22))
         burst_number_button.grid(row = 1, column = 0, padx = 3, pady = 10, sticky = sticky_to)
         burst_number_entry = Entry(sequence_frame, textvariable = self.burst_number, justify = CENTER)
         burst_number_entry.grid(row = 1, column = 1, padx = 8, pady = 10, sticky = sticky_to)
         
         self.burst_delay_number = StringVar()
         self.burst_delay_number.set(burst_delay_sec)
-        burst_delay_button = Button(sequence_frame, text = "Interburst delay: ", fg = 'black', bg = button_background, command = lambda: self.numpad_popup(self.settings_popup, 21))
+        burst_delay_button = Button(sequence_frame, text = "Interburst delay: ", fg = 'black', bg = button_background,
+                                    font = myfont, command = lambda: self.numpad_popup(self.settings_popup, 21))
         burst_delay_button.grid(row = 2, column = 0, padx = 3, pady = 10, sticky = sticky_to)
         burst_delay_entry = Entry(sequence_frame, textvariable = self.burst_delay_number, justify = CENTER)
         burst_delay_entry.grid(row = 2, column = 1, padx = 8,pady = 10, sticky = sticky_to)
         
         #___________burst Frame ______________
+        label_font = font.Font(size=6)
         self.burst_frame = Frame(self.settings_popup, width = 340, height =120, background = frame_background)
-        #self.burst_frame.place(x = 585, y = 5)
         self.burst_frame.grid(row = 0, column = 2, sticky = sticky_to, padx = frame_padding, pady=frame_padding, rowspan = 3)
-        number_measurements_burst_label = Label(self.burst_frame, justify = CENTER, wraplength = 100, text = "# Measurements",fg = fground, bg = button_background,borderwidth=1, relief="solid")
+        number_measurements_burst_label = Label(self.burst_frame, justify = CENTER, wraplength = 60, text = "# Measurements",
+                                                font = label_font, fg = fground, bg = button_background,borderwidth=1, relief="solid")
         number_measurements_burst_label.grid(row = 0, column = 0, padx = 4, pady = 3, sticky = sticky_to)
-        pulses_per_burst_label = Label(self.burst_frame,justify = CENTER, wraplength = 100, text = "Pulses per Measurement",fg = fground, bg = button_background, borderwidth=1, relief="solid")
+        pulses_per_burst_label = Label(self.burst_frame,justify = CENTER, wraplength = 60, text = "Pulses per Measurement",
+                                       font = label_font, fg = fground, bg = button_background, borderwidth=1, relief="solid")
         pulses_per_burst_label.grid(row = 0, column = 1, padx = 4, pady = 3, sticky = sticky_to)
-        myFont = font.Font(size=8)
+        
         #create x number of buttons depending on number of bursts provided
         #limited to 10 bursts for spacing reasons
         for x in range(0,burst_number):
-            self.measurement_burst_button = Button(self.burst_frame, text = self.measurement_burst[x], fg = 'black', bg = button_background, command = lambda x =x: self.numpad_popup(self.settings_popup, 23+x), font = myFont)
+            self.measurement_burst_button = Button(self.burst_frame, text = self.measurement_burst[x], fg = 'black', bg = button_background,
+                                                   command = lambda x =x: self.numpad_popup(self.settings_popup, 23+x), font = myfont)
             self.measurement_burst_button.grid(row = 1+x, column = 0, padx = 3, pady = 1, sticky = sticky_to)
         
-            self.pulse_burst_button= Button(self.burst_frame, text = self.pulse_burst[x], fg = 'black', bg = button_background, command = lambda x =x: self.numpad_popup(self.settings_popup, 33+x), font = myFont)
+            self.pulse_burst_button= Button(self.burst_frame, text = self.pulse_burst[x], fg = 'black', bg = button_background,
+                                            command = lambda x =x: self.numpad_popup(self.settings_popup, 33+x), font = myfont)
             self.pulse_burst_button.grid(row = 1+x, column = 1, padx = 3, pady = 1, sticky = sticky_to)
             
         # resizable buttons and frames within this window
@@ -350,7 +392,7 @@ class settings_window:
         settings[2][1] = int(self.pulse_rate.get())
         settings[3][1] = int(self.integ_time.get())
         settings[4][1] = int(self.dark_subtract.get())
-        settings[5][1] = int(self.lamp_voltage.get())
+        #settings[5][1] = int(self.lamp_voltage.get())
         settings[6][1] = int(self.threshold.get())
         settings[7][1]= int(self.max_pulses.get())
         settings[8][1] = int(self.smoothing.get())
@@ -397,7 +439,7 @@ class settings_window:
         self.pulse_rate.set('60')
         self.integ_time.set('120')
         self.dark_subtract.set('1')
-        self.lamp_voltage.set('1000')
+        #self.lamp_voltage.set('1000')
         self.threshold.set('60000')
         self.smoothing.set('2')
         self.min_wavelength.set('300')
@@ -432,7 +474,7 @@ class settings_window:
         settings[2][1] = int(self.pulse_rate.get())
         settings[3][1] = int(self.integ_time.get())
         settings[4][1] = int(self.dark_subtract.get())
-        settings[5][1] = int(self.lamp_voltage.get())
+        #settings[5][1] = int(self.lamp_voltage.get())
         settings[6][1] = int(self.threshold.get())
         settings[7][1]= int(self.max_pulses.get())
         settings[8][1] = int(self.smoothing.get())
@@ -459,17 +501,16 @@ class settings_window:
             csv_writer = csv.writer(settings_open, delimiter = ',')
             csv_writer.writerows(settings)
         # reset the window
-        self.settings_popup.destroy()
-        self.settings_window()
+        self.window_refresh()
         
     def numpad_popup(self, parent, number):
         self.popup = Toplevel(parent)
         self.numpad = Num_Pad(self.popup, number)
         parent.wait_window(self.popup)
-        self.settings_popup.destroy()
         self.window_refresh()
         
     def window_refresh(self):
+        self.settings_popup.destroy()
         self.settings_wind = Toplevel(self.master)
         self.sett_popup = settings_window(self.settings_wind, self.master)
 

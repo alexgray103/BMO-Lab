@@ -55,7 +55,7 @@ class key_pad:
             global filename
             global foldername
             path = '/home/pi/Desktop/Spectrometer/'
-            filename = str(self.key.get()+ '_' + 'save.csv')
+            filename = str(self.key.get())
             foldername = str(path + self.key.get())
             self.keypad.destroy()
             
@@ -72,7 +72,7 @@ class key_pad:
     
         btn = list(range(len(btn_list)))
             
-        for label in btn_list:
+        for  label in btn_list:
             btn[n] = Button(self.keypad, text = label, width = 5, height = 4)
             btn[n].grid(row = r, column = c, sticky = 'nsew')
             if n == 29:
