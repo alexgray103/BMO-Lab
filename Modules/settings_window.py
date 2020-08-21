@@ -1,5 +1,6 @@
 from settings import Settings as _Settings
 from number_pad import *
+from ESS_functions import *
 import csv
 import os
 import numpy as np
@@ -7,7 +8,17 @@ import numpy as np
 # module connect functionality 
 from tkinter import *
 import ESS_GUI_module_0
-import ESS_GUI_module_1_v1
+import ESS_GUI_module_1
+import ESS_GUI_module_3
+import ESS_GUI_module_4
+import ESS_GUI_module_5
+import ESS_GUI_module_6
+import ESS_GUI_module_7
+
+
+
+from settings import Settings as _Settings
+
 
 import serial
 import matplotlib.pyplot as plt
@@ -17,7 +28,7 @@ from time import sleep
 settings_file = '/home/pi/Desktop/Spectrometer/settings/settings.csv'
 
 
-class settings_window:
+class settings_popup_window:
     def __init__(self, parent, master):
         global settings_file
         self.master = master
@@ -52,12 +63,42 @@ class settings_window:
         
         if module == 0:
             root = Tk()
-            app =  ESS_GUI_module_1_v1.Module_1(root)
+            app = Module_0(root)
             root.mainloop()
-            
+        
         elif module == 1:
             root = Tk()
             app = Module_1(root)
+            root.mainloop()
+            
+        elif module == 2:
+            root = Tk()
+            app = Module_2(root)
+            root.mainloop()
+            
+        elif module == 3:
+            root = Tk()
+            app = Module_3(root)
+            root.mainloop()
+            
+        elif module == 4:
+            root = Tk()
+            app = Module_4(root)
+            root.mainloop()
+            
+        elif module == 5:
+            root = Tk()
+            app = Module_5(root)
+            root.mainloop()
+            
+        elif module == 6:
+            root = Tk()
+            app = Module_6(root)
+            root.mainloop()
+            
+        elif module == 7:
+            root = Tk()
+            app = Module_7(root)
             root.mainloop()
             
             
@@ -141,7 +182,7 @@ class settings_window:
         self.acquisition_number = IntVar() 
         self.acquisition_number.set(pulse)
         acq_number_button = Button(single_acquisition_frame, text = "Pulses:", fg = fground, bg = button_background, font = myfont,
-                                   command = lambda: self.numpad_popup(self.settings_popup, 1))
+                                   command = lambda: sseelf.numpad_popup(self.settings_popup, 1))
         acq_number_button.grid(row = 1, column = 0, pady = 2, padx = 3, sticky = sticky_to)
         acq_number_entry = Entry(single_acquisition_frame, textvariable = self.acquisition_number, justify = CENTER)
         acq_number_entry.grid(row = 1, column = 1, padx = 14, pady = 2, sticky = sticky_to)
@@ -512,6 +553,6 @@ class settings_window:
     def window_refresh(self):
         self.settings_popup.destroy()
         self.settings_wind = Toplevel(self.master)
-        self.sett_popup = settings_window(self.settings_wind, self.master)
+        self.sett_popup = settings_popup_window(self.settings_wind, self.master)
 
     
