@@ -28,47 +28,33 @@ def run_program():
     ser.write(b'module\n')
     module = int(ser.readline().decode()) # read in the module number
     print(module)
-       
+    root = Tk()
+    
+
     if module == 0:
-        root = Tk()
         app = Module_0(root)
-        root.mainloop()
         
     elif module == 1:
-        root = Tk()
-        app = Module_5(root)
-        root.mainloop()
-        
+        app = Module_1(root)
+
     elif module == 2:
-        root = Tk()
         app = Module_2(root)
-        root.mainloop()
         
     elif module == 3:
-        root = Tk()
         app = Module_3(root)
-        root.mainloop()
         
     elif module == 4:
-        root = Tk()
         app = Module_4(root)
-        root.mainloop()
         
     elif module == 5:
-        root = Tk()
         app = Module_5(root)
-        root.mainloop()
         
     elif module == 6:
-        root = Tk()
         app = Module_6(root)
-        root.mainloop()
         
     elif module == 7:
-        root = Tk()
         app = Module_7(root)
-        root.mainloop()
-        
+    root.mainloop()
 # open up a serial to allow for reading in of module attachment
 port = "/dev/ttyUSB0"
 port2 = "/dev/ttyUSB1"

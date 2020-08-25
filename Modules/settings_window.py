@@ -56,51 +56,42 @@ class settings_popup_window:
 
         ser.write(b'module\n')
         module = int(ser.readline().decode()) # read in the module number
-        print(module)
+        
         self.master.destroy()
         self.master.quit()
-        
+        root = Tk()
         
         if module == 0:
-            root = Tk()
-            app = Module_0(root)
-            root.mainloop()
-        
+            app = ESS_GUI_module_0.Module_0(root)
+            
+            
         elif module == 1:
-            root = Tk()
-            app = Module_1(root)
-            root.mainloop()
+            app = ESS_GUI_module_1.Module_1(root)
+            
             
         elif module == 2:
-            root = Tk()
-            app = Module_2(root)
-            root.mainloop()
+            app = ESS_GUI_module_2.Module_2(root)
+            
             
         elif module == 3:
-            root = Tk()
-            app = Module_3(root)
-            root.mainloop()
+            app = ESS_GUI_module_3.Module_3(root)
+            
             
         elif module == 4:
-            root = Tk()
-            app = Module_4(root)
-            root.mainloop()
+            app = ESS_GUI_module_4.Module_4(root)
             
         elif module == 5:
-            root = Tk()
-            app = Module_5(root)
-            root.mainloop()
+            app = ESS_GUI_module_5.Module_5(root)
             
         elif module == 6:
-            root = Tk()
-            app = Module_6(root)
-            root.mainloop()
+            app = ESS_GUI_module_6.Module_6(root)
             
         elif module == 7:
-            root = Tk()
-            app = Module_7(root)
-            root.mainloop()
-            
+            app = ESS_GUI_module_7.Module_7(root)
+        
+        
+        root.mainloop()
+        
             
     def settings_buttons(self):
         myfont = font.Font(size = 9)
@@ -182,7 +173,7 @@ class settings_popup_window:
         self.acquisition_number = IntVar() 
         self.acquisition_number.set(pulse)
         acq_number_button = Button(single_acquisition_frame, text = "Pulses:", fg = fground, bg = button_background, font = myfont,
-                                   command = lambda: sseelf.numpad_popup(self.settings_popup, 1))
+                                   command = lambda: self.numpad_popup(self.settings_popup, 1))
         acq_number_button.grid(row = 1, column = 0, pady = 2, padx = 3, sticky = sticky_to)
         acq_number_entry = Entry(single_acquisition_frame, textvariable = self.acquisition_number, justify = CENTER)
         acq_number_entry.grid(row = 1, column = 1, padx = 14, pady = 2, sticky = sticky_to)
