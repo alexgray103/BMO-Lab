@@ -4,6 +4,7 @@ import numpy as np #https://scipy-lectures.org/intro/numpy/operations.html
 from tkinter import messagebox
 import threading
 import tkinter.font as tkFont
+import random
 
 #import all dependancies
 from settings import Settings as _Settings
@@ -79,22 +80,23 @@ class Module_0:
         self.open_loop_stop = None # control open Loop button
         # parameters for buttons and frames
         #create all the buttons onto to the main window
-        button_width = 10
+        button_width = 8
         button_big_height = 4
         button_small_height = 3
         sticky_to = 'nsew' # allows all buttons to resize
         
         # battery check functions
-        #self.percent = 0 # battery percent variable
-        #self.battery_message = StringVar()
-        #self.battery_message.set(" %")
-        #battery_font = tkFont.Font(family = "Lucida Grande", size = 16)
+        self.percent = 0 # battery percent variable
+        self.battery_message = StringVar()
+        self.battery_message.set(" %")
+        battery_font = tkFont.Font(family = "Lucida Grande", size = 16)
         label_font = tkFont.Font(family = "Lucida Grande", size = 12)
+        
         module_message = 'Module 0: Base ESS'
         # setup Serial port- 
          ## Graphing Frame and fake plot
         self.graph_frame = Frame(self.root, background = "white")
-        self.graph_frame.grid(row = 1, column = 1, columnspan = 6, rowspan = 5, padx = 1, pady = 3, sticky = sticky_to)
+        self.graph_frame.grid(row = 1, column = 1, columnspan = 7, rowspan = 5, padx = 1, pady = 3, sticky = sticky_to)
         
         #initalize figure
         self.fig = plt.figure()
@@ -125,7 +127,7 @@ class Module_0:
         
         
         # allow buttons and frames to resize with the resizing of the root window
-        self.root.grid_columnconfigure((0,1,2,3,4,5,6),weight = 1)
+        self.root.grid_columnconfigure((0,1,2,3,4,5,6,7),weight = 1)
         self.root.grid_rowconfigure((0,1,2,3,4,5,6),weight = 1)
         
         
@@ -137,16 +139,16 @@ class Module_0:
         self.help_button.grid(row = 0, column = 5, sticky = sticky_to)
         
         self.settings_button = Button(self.root, text = "Settings", fg = 'black', command = lambda: self.window_popup(self.root), width = button_width, height = button_big_height)
-        self.settings_button.grid(row = 0, column = 4, padx = (8,1), sticky = sticky_to)
+        self.settings_button.grid(row = 0, column = 4, padx = (1,1), sticky = sticky_to)
         
         self.save_spectra_button = Button(self.root, text = "Save as Spectra", wraplength = 80, fg = 'black', command = self.func.save_spectra, width = button_width, height = button_big_height, state = NORMAL)
-        self.save_spectra_button.grid(row = 0, column = 3, padx = (1,8), sticky = sticky_to)
+        self.save_spectra_button.grid(row = 0, column = 3, padx = (1,1), sticky = sticky_to)
         
         self.save_reference_button = Button(self.root, text = "Save as Reference", wraplength = 80, fg = 'black', command = self.func.save_reference, width = button_width, height = button_big_height, state = NORMAL)
-        self.save_reference_button.grid(row = 0, column = 2, padx = (10,0), sticky = sticky_to)
+        self.save_reference_button.grid(row = 0, column = 2, padx = (1,0), sticky = sticky_to)
         
         self.open_new_button = Button(self.root, text = "New Experiment", wraplength = 80, fg = 'black', command = self.func.open_new_experiment, width = button_width, height = button_big_height)
-        self.open_new_button.grid(row = 0, column = 1, padx = (0,5), sticky = sticky_to)
+        self.open_new_button.grid(row = 0, column = 1, padx = (0,1), sticky = sticky_to)
         
         self.open_experiment_button = Button(self.root, text = "Open Experiment", wraplength = 80, fg = 'black', command = self.func.OpenFile, width = button_width, height = button_big_height)
         self.open_experiment_button.grid(row = 0, column = 0, sticky = sticky_to)
@@ -193,19 +195,82 @@ class Module_0:
         self.add_remove_button.grid(row = 6, column = 5, padx = 5, pady = 1, sticky = sticky_to)
         
         module_label = Label(self.root, bg = 'sky blue', text = module_message, wraplength = 80, font = label_font)
-        module_label.grid(row = 6, column = 6, padx = 5, pady = 1, sticky = sticky_to)
+        module_label.grid(row = 6, column = 6, padx = 5, pady = 1, columnspan = 2, sticky = sticky_to)
+        
+        #battery_label = Label(self.root, bg = 'sky blue', textvariable = self.battery_message)
+        #battery_label.grid(row = 6, column = 6, padx = 5, pady = 1, columnspan = 2, sticky = 'nsew')
+        
+        #self.battery_frame.grid_rowconfigure((0,1,2,3),weight = 1)
+        #self.battery_frame.grid_columnconfigure((0),weight = 1)
+        
+        self.battery_frame = Frame(self.root, bg = 'sky blue')
+        self.battery_frame.grid(row = 0, column = 7, padx = (0,1), pady = 1, sticky = 'nsew')
+        
+        
+        self.battery_label_1 = Label(self.battery_frame, bg = "green", width = 1)
+        self.battery_label_1.pack(fill = BOTH)
+        
+        self.battery_label_2 = Label(self.battery_frame, textvariable = self.battery_message, bg = "green", width = 1)
+        self.battery_label_2.pack(fill = BOTH)
+        
+        self.battery_label_3 = Label(self.battery_frame, bg = "green", width = 1)
+        self.battery_label_3.pack(fill = BOTH)
+        
+        self.battery_label_4 = Button(self.battery_frame, bg = "green", width = 1)
+        self.battery_label_4.pack(fill = BOTH)
+        
+        
         # show module connected
         #messagebox.showinfo('Module #','Module 0: Base ESS System connected (No attachments)')
         
-        #def battery_percent_check():
-            #self.percent = self.func.battery_check()
-            #battery_message = str(self.percent) + " %"
+        
+        def battery_percent_check():
+            self.percent = self.func.battery_check()
+            battery_message_temp = str(self.percent) + " %"
+            #self.battery_message.set(battery_message_temp)
+            self.percent = 97
+            self.percent = random.randint(1,100)
+            print(self.percent)
             
-            #self.battery_message.set(battery_message)
+            #change battery status
+            
+            if int(self.percent) >=75:
+                print('> 75')
+                self.battery_message.set(">80 %")
+                self.battery_label_1.configure(bg = 'green')
+                self.battery_label_2.configure(bg = 'green')
+                self.battery_label_3.configure(bg = 'green')
+                self.battery_label_4.configure(bg = 'green')
+            elif int(self.percent) <75 and self.percent > 50:
+                self.battery_message.set("75 %")
+                self.battery_label_2.configure(bg = 'green')
+                self.battery_label_1.configure(bg = 'red')
+                self.battery_label_3.configure(bg = 'green')
+                self.battery_label_4.configure(bg = 'green')
+                print('50-75')
+            elif int(self.percent) <50 and self.percent >25:
+                self.battery_message.set("50 %")
+                self.battery_label_1.configure(bg = 'red')
+                self.battery_label_2.configure(bg = 'red')
+                self.battery_label_3.configure(bg = 'green')
+                self.battery_label_4.configure(bg = 'green')
+                print('25-50')
+            else:
+                self.battery_message.set("<25 %")
+                self.battery_label_1.configure(bg = 'red')
+                self.battery_label_2.configure(bg = 'red')
+                self.battery_label_3.configure(bg = 'red')
+                self.battery_label_4.configure(bg = 'yellow')
+                print('0-25')
+            
+            self.root.update_idletasks()
             #threading.Timer(5,battery_percent_check).start()
+            try:
+                self.root.after(10000, battery_percent_check)
+            except:
+                pass
             
-            
-        #battery_percent_check()
+        battery_percent_check()
         
    # allows for popup of settings window
     def window_popup(self, master):

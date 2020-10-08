@@ -43,6 +43,8 @@ class functions:
         self.df = None # data frame array used for storing and plotting data
         self.df_scan = None
         self.serial_check = False #variable for flagging serial connection
+        self.battery_check_flag = False
+        self.battery_percent = 100
         
         # attributes to select data to be plotted
         self.ref = np.ones((288,1))*1000 # temporary reference
@@ -84,9 +86,13 @@ class functions:
         self.ser.write(b"home\n")
         
     def battery_check(self):
-        self.ser.write(b"battery\n")
-        percent = self.ser.readline().decode()
-        return percent
+        if not self.battery_check_flag:
+            self.ser.write(b"battery\n")
+            percent = self.ser.readline().decode()
+            self.battery_percent = percent
+            return percent
+        else:
+            return self.battery_percent
     
     def save_reference(self):
         if self.save_file is not None:
@@ -232,6 +238,7 @@ class functions:
         
         
     def dark_subtract_func(self):
+        self.battery_check_flag = True
         (self.settings, self.wavelength) = self.settings_func.settings_read()
         number_avg = int(self.settings[11][1])
         integ_time =float(self.settings[3][1])
@@ -255,17 +262,18 @@ class functions:
             
             #if x == 0:  # reached number of averages
             #data_dark = data_dark #take average of data and save
-            if smoothing_used == 1:  # if smoothing is checked smooth array
-                dummy = np.ravel(data_dark)
-                for i in range(smoothing_width-1,len(data_dark)-smoothing_width,1):
-                    data_dark[i] = sum(np.ones(smoothing_width)
-                                               *dummy[i-1:i+1])/(smoothing_width)
+            #if smoothing_used == 1:  # if smoothing is checked smooth array
+            #    dummy = np.ravel(data_dark)
+            #    for i in range(1,286,1):
+            #        data_dark[i] = sum(dummy[i-1:i+2])/(3)
+            self.battery_check_flag = False
             return data_dark
         except serial.serialutil.SerialException:
+            self.battery_check_flag = False
             messagebox.showerror('Error', 'Spectrometer Not connected, Connect and restart')
     
     def acquire_avg(self, pulses):
-        
+        self.battery_check_flag = True        
         (self.settings, self.wavelength) = self.settings_func.settings_read()
         number_avg = int(self.settings[11][1])
         integ_time =float(self.settings[3][1])
@@ -278,7 +286,7 @@ class functions:
         if dark_subtract == 1:
             data_dark = self.dark_subtract_func()
         else: 
-            data_dark = 0
+            data_dark = np.zeros(288)
         try:        
             self.ser.write(b"set_integ %0.6f\n" % integ_time)
             self.ser.write(b"pulse %d\n" % pulses)
@@ -293,17 +301,20 @@ class functions:
                     
                 if x == number_avg-1:  # reached number of averages
                     data = data/number_avg #take average of data and save
+                    data = data-data_dark
                     if smoothing_used == 1:  # if smoothing is checked smooth array
-                        dummy = np.ravel(data_dark)
-                        for i in range(smoothing_width-1,len(data_dark)-smoothing_width,1):
-                            data_dark[i] = sum(np.ones(smoothing_width)
-                                                       *dummy[i-1:i+1])/(smoothing_width)
-            data = data-data_dark
-            for idx in range(0,len(data)):
-                if data[idx] <0:
-                    data[idx] = 1
+                        dummy = np.ravel(data)
+                        for i in range(1,286,1):
+                            data[i] = sum(dummy[i-1:i+2])/(3)
+            self.battery_check_flag = False
+            
+            data = np.where(data<=0,0,data)
+            #for idx in range(0,len(data)):
+            #    if data[idx] <=0:
+            #        data[idx] = 1
             return data
         except serial.serialutil.SerialException:
+            self.battery_check_flag = False
             messagebox.showerror('Error', 'Spectrometer Not connected, Connect and Restart')
             return None
     
