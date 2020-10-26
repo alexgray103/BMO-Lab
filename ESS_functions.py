@@ -93,24 +93,17 @@ class functions:
             return percent
         else:
             return self.battery_percent
-    
     def save_reference(self):
         if self.save_file is not None:
             self.ref = pd.DataFrame(np.loadtxt(self.acquire_file, delimiter = ','))
             self.df['Reference %d' % self.reference_number] = self.ref
             self.df.to_csv(self.save_file, mode = 'w', index = False)
             self.reference_number = self.reference_number +1 
+            ref_message = "Ref #: " + str(self.reference_number-1)
+            self.plotting(self.ref) # send a fake value to plot updated ref
         else:
             messagebox.showerror('Error', 'No Save File selected, create save file to save reference')
-    
-    def save_scan_reference(self):
-        if self.scan_file is not None:
-            self.scan_ref = pd.DataFrame(np.loadtxt(self.acquire_file, delimiter = ','))
-            self.df_scan['Reference %d' % self.reference_number] = self.scan_ref
-            self.df_scan.to_csv(self.scan_file, mode = 'w', index = False)
-            self.reference_number = self.reference_number +1 
-        else:
-            messagebox.showerror('Error', 'No Save File selected, create save file to save reference')
+        return ref_message
     
     def save_spectra(self):
         if self.save_file is not None:
@@ -149,7 +142,7 @@ class functions:
 
         if self.ratio_view_handler:
         
-            plt.plot(self.wavelength, np.ones((288,1))*100, 'r--')
+            plt.plot(self.wavelength, np.ones((288))*100, 'r--')
             if not self.autoscale_handler:
                 plt.ylim(0,110)
             plt.xlim(300,900)
@@ -170,6 +163,7 @@ class functions:
         if self.ratio_view_handler:
             plt.clf()
             self.plot_labels_axis() # configure axis
+            
             data = np.true_divide(data, self.ref)*100
             if self.add_remove_top.data_headers is not None:
 
@@ -218,7 +212,10 @@ class functions:
     def plot_selected(self):
         plt.clf()
         self.plot_labels_axis()
+        print(len(self.add_remove_top.data_headers))
         try:
+            for col in range(0,len(self.add_remove_top.data_headers)):
+                self.plotting(self.df[self.add_remove_top.data_headers[col]])
             plt.plot(self.wavelength, self.df[self.add_remove_top.data_headers])
             plt.legend(self.add_remove_top.data_headers, loc = "upper right", prop ={'size': 6})
             plt.subplots_adjust(bottom =0.14, right = 0.95)
@@ -319,6 +316,7 @@ class functions:
             return None
     
     def acquire(self, save):
+        scan_message = None
         (self.settings, self.wavelength) = self.settings_func.settings_read()
         data = self.acquire_avg(int(self.settings[1][1]))
         if data is not None:
@@ -332,14 +330,15 @@ class functions:
                     self.df.to_csv(self.save_file, mode = 'w', index = False)
                     data = self.df[['Scan_ID %d' %self.scan_number]]
                     self.scan_number = 1 + self.scan_number
-                        
+                    scan_message = "Scan #: " + str(self.scan_number-1)    
             else: # temporary save
                 np.savetxt(self.acquire_file, data, fmt="%d", delimiter=",")
                 data = pd.read_csv(self.acquire_file, header = None)
-            
+                
             plt.clf()
             self.plotting(data)
-        
+        return scan_message
+    
     def open_loop_function(self):
         if self.ser.is_open:
             plt.xlim(int(self.settings[9][1]), int(self.settings[10][1]))
@@ -348,6 +347,7 @@ class functions:
             
             plt.clf()
             data = self.acquire_avg(0)
+            data = pd.DataFrame(data)
             np.savetxt(self.acquire_file, data, fmt="%d", delimiter= ",")
             self.plotting(data)
         
@@ -384,12 +384,13 @@ class functions:
                 for i in range(0,number_measurements_burst):
                     graph_label = 'Burst ' + str(burst+1) + ' measurement ' + str(i+1)
                     pulses = int(self.settings[33+burst][1])
+                    data = []
                     data = self.acquire_avg(pulses)
-        
-                    plt.plot(self.wavelength, data, label = graph_label)
+                    data = pd.DataFrame(data)
+                    self.plotting(data)#.plot(self.wavelength, data, label = graph_label)
                     plt.subplots_adjust(bottom = 0.14, right = 0.95)
-                    plt.legend(loc = "center right", prop = {'size': 6})
-                    self.fig.canvas.draw()
+                    #plt.legend(loc = "center right", prop = {'size': 6})
+                    
                     measurement = measurement+1
                     
                     if save:
@@ -435,7 +436,7 @@ class functions:
             self.settings_func.settings_write(self.settings)
             
     def OpenFile(self):
-            
+        scan_message = None    
         save_file = askopenfilename(initialdir="/home/pi/Desktop/Spectrometer",
                                     filetypes =(("csv file", "*.csv"),("All Files","*.*")),
                                     title = "Choose a file.")
@@ -469,6 +470,8 @@ class functions:
             self.add_remove_top.data_headers = None
             self.add_remove_top.ref_ratio = None
             self.add_remove_top.ref_ratio_idx = None
+            scan_message = "Scan #: " + str(self.scan_number-1)
+        return scan_message
     
     def new_scan(self):
         global path
@@ -495,7 +498,12 @@ class functions:
            messagebox.showerror("Error", "Filename Already Exists. Try New Filename")
         
     def scan(self):
+        grid_size = int(self.settings[14][1])
         # check if spectrometer is connected
+        for x in range(0,int(grid_size/2)):
+            self.ser.write(b"x 1\n")    
+        for y in range(0,int(grid_size/2)):
+            self.ser.write(b"y 1\n")
         if self.ser.is_open:
             self.plot_labels_axis() # set axis and labels
             (self.settings, self.wavelength) = self.settings_func.settings_read()
@@ -507,6 +515,7 @@ class functions:
                     grid_size = int(self.settings[14][1])
                     scan_resolution = int(self.settings[13][1])
                     start = time.time()
+                            
                     
                     def scan_move():
                         self.ser.write(b"step_size %d\n" %scan_resolution)

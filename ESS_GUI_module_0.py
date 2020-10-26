@@ -66,7 +66,7 @@ class Module_0:
         global settings_file
         self.root = master
         self.root.title("ESS System Interface")
-        full_screen = True
+        full_screen = False
         if full_screen:
             self.root.attributes('-fullscreen', True) # fullscreen on touchscreen
         else:
@@ -144,13 +144,13 @@ class Module_0:
         self.save_spectra_button = Button(self.root, text = "Save as Spectra", wraplength = 80, fg = 'black', command = self.func.save_spectra, width = button_width, height = button_big_height, state = NORMAL)
         self.save_spectra_button.grid(row = 0, column = 3, padx = (1,1), sticky = sticky_to)
         
-        self.save_reference_button = Button(self.root, text = "Save as Reference", wraplength = 80, fg = 'black', command = self.func.save_reference, width = button_width, height = button_big_height, state = NORMAL)
+        self.save_reference_button = Button(self.root, text = "Save as Reference", wraplength = 80, fg = 'black', command = self.check_ref_number, width = button_width, height = button_big_height, state = NORMAL)
         self.save_reference_button.grid(row = 0, column = 2, padx = (1,0), sticky = sticky_to)
         
         self.open_new_button = Button(self.root, text = "New Experiment", wraplength = 80, fg = 'black', command = self.func.open_new_experiment, width = button_width, height = button_big_height)
         self.open_new_button.grid(row = 0, column = 1, padx = (0,1), sticky = sticky_to)
         
-        self.open_experiment_button = Button(self.root, text = "Open Experiment", wraplength = 80, fg = 'black', command = self.func.OpenFile, width = button_width, height = button_big_height)
+        self.open_experiment_button = Button(self.root, text = "Open Experiment", wraplength = 80, fg = 'black', command = self.check_scan_number_open_file, width = button_width, height = button_big_height)
         self.open_experiment_button.grid(row = 0, column = 0, sticky = sticky_to)
         
         self.acquire_button = Button(self.root, text = "Acquire", wraplength = 80, fg = 'black',
@@ -158,7 +158,7 @@ class Module_0:
         self.acquire_button.grid(row = 1, column = 0, pady = (3,1), sticky = sticky_to)
         
         self.acquire_save_button = Button(self.root, text = "Acquire and Save", fg = 'black', wraplength = 80,
-                                          command = lambda: self.func.acquire(save = True)
+                                          command = self.check_scan_number
                                           , width = button_width, height = button_big_height, state = NORMAL)
         self.acquire_save_button.grid(row = 2, column = 0, pady = (0,1), sticky = sticky_to)
         
@@ -197,12 +197,13 @@ class Module_0:
         module_label = Label(self.root, bg = 'sky blue', text = module_message, wraplength = 80, font = label_font)
         module_label.grid(row = 6, column = 6, padx = 5, pady = 1, columnspan = 2, sticky = sticky_to)
         
-        #battery_label = Label(self.root, bg = 'sky blue', textvariable = self.battery_message)
-        #battery_label.grid(row = 6, column = 6, padx = 5, pady = 1, columnspan = 2, sticky = 'nsew')
+        self.scan_label = Label(self.root, bg = 'sky blue', text = "Scan: ", wraplength = 80)
+        self.scan_label.grid(row = 0, column = 7, padx = 5, pady = 1, sticky = 'nsew')
         
         #self.battery_frame.grid_rowconfigure((0,1,2,3),weight = 1)
         #self.battery_frame.grid_columnconfigure((0),weight = 1)
         
+        '''
         self.battery_frame = Frame(self.root, bg = 'sky blue')
         self.battery_frame.grid(row = 0, column = 7, padx = (0,1), pady = 1, sticky = 'nsew')
         
@@ -228,8 +229,6 @@ class Module_0:
             self.percent = self.func.battery_check()
             battery_message_temp = str(self.percent) + " %"
             #self.battery_message.set(battery_message_temp)
-            self.percent = 97
-            self.percent = random.randint(1,100)
             print(self.percent)
             
             #change battery status
@@ -271,7 +270,21 @@ class Module_0:
                 pass
             
         battery_percent_check()
+        '''
         
+    def check_scan_number(self):
+        message = self.func.acquire(save = True)
+        print(message)
+        self.scan_label.config(text = message)
+    
+    def check_ref_number(self):
+        message = self.func.save_reference()
+        print(message)
+        self.scan_label.config(text = message)
+        
+    def check_scan_number_open_file(self):
+        message = self.func.OpenFile()
+        self.scan_label.config(text = message)
    # allows for popup of settings window
     def window_popup(self, master):
         self.popup_window = Toplevel(master)
@@ -295,11 +308,43 @@ class Module_0:
     # handle the button appearance and handles openloop functionality
     def open_loop_state(self):
         if self.open_loop_stop is not None:
+            self.settings_button.config(state = NORMAL)
+            self.acquire_button.config(state = NORMAL)
+            self.acquire_save_button.config(state = NORMAL)
+            self.sequence_button.config(state = NORMAL)
+            self.sequence_save_button.config(state = NORMAL)
+            self.autorange_button.config(state=NORMAL)
             self.open_loop_button.config(command = self.open_loop,
                                          relief = RAISED, bg = 'light grey')
+            self.ratio_view_button.config(state = NORMAL)
+            self.plot_selected_button.config(state = NORMAL)
+            self.save_spectra_button.config(state = NORMAL)
+            self.add_remove_button.config(state = NORMAL)
+            self.save_reference_button.config(state = NORMAL)
+            self.open_new_button.config(state = NORMAL)
+            self.open_experiment_button.config(state = NORMAL) 
+            self.help_button.config(state = NORMAL)
+            
+            
             self.root.after_cancel(self.open_loop_stop)
     
     def open_loop(self):
+        self.settings_button.config(state = DISABLED)
+        self.acquire_button.config(state = DISABLED)
+        self.acquire_save_button.config(state = DISABLED)
+        self.sequence_button.config(state = DISABLED)
+        self.sequence_save_button.config(state = DISABLED)
+        self.autorange_button.config(state=DISABLED)
+        self.ratio_view_button.config(state = DISABLED)
+        self.plot_selected_button.config(state = DISABLED)
+        self.save_spectra_button.config(state = DISABLED)
+        self.add_remove_button.config(state = DISABLED)
+        self.save_reference_button.config(state = DISABLED)
+        self.open_new_button.config(state = DISABLED)
+        self.open_experiment_button.config(state = DISABLED) 
+        self.help_button.config(state= DISABLED)
+        
+        
         self.open_loop_button.config(command = self.open_loop_state,
                                      relief = SUNKEN, bg = 'gold')
         self.func.open_loop_function()
