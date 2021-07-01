@@ -1,0 +1,54 @@
+Part,Description,Vendor,RQ,PN,MOQ,MOQ Cost,link,Inventory,type
+12 Pin Female Male,Connect to spectrometer,Digikey,1,,1,$0.05,www.digikey.com,10,JST Connectors
+12 Pin Male,Connect to spectrometer,Digikey,1,,1,$0.05,www.digikey.com,10,JST Connectors
+12.6V Chargers (2A),Power and charge the ESS system,Amazon*,1,,1,$12.99,https://www.amazon.com/TalentCell-Lithium-Battery-Charger-Rechargeable/dp/B07P8DMSZ8/ref=sr_1_2?dchild=1&keywords=talentcell+12.6V+ac%2Fdc+2a&qid=1613490641&sr=8-2,2,Base ESS (Electronics)
+12V DC Input Jack,Power for the system ,Digikey,1,839-1291-ND,1,$2.52 ,https://www.digikey.com/en/products/detail/tensility-international-corp/54-00063/6206244,6,Base ESS (Connectors)
+18650 batteries,3.7 V batteries used to power system,Digikey,3,,1,$5.95 ,https://www.digikey.com/en/products/detail/sparkfun-electronics/PRT-12895/5271298,9,Base ESS (Electronics)
+3D printer material,Create enclosure for ESS system,Amazon*,1,,1,$22.99 ,https://www.amazon.com/HATCHBOX-3D-Filament-Dimensional-Accuracy/dp/B00J0ECR5I?ref_=ast_sto_dp,1,Base ESS (Electronics)
+4-40 Flathead 1/2,Fastners,McMaster,7,92210A110,100,$3.85 ,www.mcmaster.com,100,Screws
+4-40 Hex 1/4in,Fastners,McMaster,4,92196A106,100,$3.92 ,www.mcmaster.com,100,Screws
+4-40 Hex 5/16in,Fastners,McMaster,18,92185A107,50,$4.83 ,www.mcmaster.com,100,Screws
+6-32 Low Profile 3/8,Fastners,McMaster,8,93615A215,25,$7.85 ,www.mcmaster.com,100,Screws
+7 inch Screen,Connects to raspberry pi for viewing desktop,Amazon*,1,,1,$55.99 ,https://www.amazon.com/Kuman-Capacitive-Display-Raspberry-SC7B/dp/B01F3801A2,2,Base ESS (Electronics)
+ADS8321 (16 bit ADC),Read spectrometer values,Digikey,1,,1,$12.08 ,https://www.digikey.com/en/products/detail/texas-instruments/ADS8321E-250/295542,3,Base ESS (Electronics)
+Arduino Nano,"Microcontroller used for controlling spectrometer, flash lamp,
+battery read, module read etc.",Arduino,1,,1,$20.70 ,https://store.arduino.cc/usa/arduino-nano,3,Base ESS (Electronics)
+Bluetooth keyboard,Bluetooth keyboard to allow for typing and mousepad,Amazon*,1,,1,$35.00 ,https://www.amazon.com/Bluetooth-Jelly-Comb-Rechargable-Tablet-Dark/dp/B07P2HW12P/ref=sr_1_4?crid=1HS92W9CUQPQY&dchild=1&keywords=bluetooth+keyboard+with+touchpad&qid=1602699122&sprefix=bluettoth+keyboard+w%2Caps%2C142&sr=8-4,2,Base ESS (Electronics)
+Buck converter,Steps down input voltage,Amazon*,1,,6,$9.99 ,https://www.amazon.com/MCIGICM-step-down-Converter-3-0-40V-1-5-35V/dp/B06XZ1DKF2/ref=sr_1_3?crid=3538ZV9UL7Y8R&dchild=1&keywords=buck+converter&qid=1602700818&sprefix=buck+con%2Caps%2C138&sr=8-3,4,Base ESS (Electronics)
+Buzzer,Allow for audio feedback to user on the main PCB ,Digikey,1,CMI-1295IC-0585T,1,$1.26 ,https://www.digikey.com/en/products/detail/cui-devices/cmi-1295ic-0585t/11674150,1,Base ESS (Electronics)
+C12880 Breakout board,Spectrometer eval board,Groupgets,1,,1,$99.00 ,https://groupgets.com/manufacturers/getlab/products/c12880ma-breakout-board,3,Base ESS (Electronics)
+C12880MA-10,Spectrometer with SMA connector,Hamamatsu,1,C12880ma-10,1,$250 ,https://www.hamamatsu.com/us/en/product/type/L13651/index.html,1,Base ESS (Electronics)
+Connector PCB,Connect old 5/8 Pin module connect control to the newer 16 Pin module control/connect,JLC PCB ,1,,5,$20.64 ,jlcpcb.com,9,Module Components
+Fan,Cooling system,Amazon*,1,,5,$9.99 ,https://www.amazon.com/Brushless-Raspberry-Connector-Separating-Interface/dp/B07TG7G7M9/ref=sr_1_7?dchild=1&keywords=raspberry+pi+fan+5+pack+easycargo&qid=1602612069&s=electronics&sr=1-7,7,Base ESS (Electronics)
+Female 16 Pin (w/ ribbon cable),Connect to module detect ,Amazon*,1,,1,$4.44 ,https://www.amazon.com/Connector-Flat-Ribbon-Cable-Pitch/dp/B083RS2FGM/ref=asc_df_B083RS2FGM/?tag=hyprod-20&linkCode=df0&hvadid=416886378438&hvpos=&hvnetw=g&hvrand=10758372916624627088&hvpone=&hvptwo=&hvqmt=&hvdev=c&hvdvcmdl=&hvlocint=&hvlocphy=1018127&hvtargid=pla-900605670882&psc=1&tag=&ref=&adgrpid=94306393152&hvpone=&hvptwo=&hvadid=416886378438&hvpos=&hvnetw=g&hvrand=10758372916624627088&hvqmt=&hvdev=c&hvdvcmdl=&hvlocint=&hvlocphy=1018127&hvtargid=pla-900605670882,5,JST Connectors
+Female 3 pin,Connector for spectrometer ,Digikey,2,,1,$0.24 ,https://www.digikey.com/en/products/detail/jst-sales-america-inc/XHP-12/1651,11,JST Connectors
+Female 4 pin,Connector for Flash Lamp,Digikey,2,,1,$0.10 ,https://www.digikey.com/en/products/detail/jst-sales-america-inc/XHP-4/683353,19,JST Connectors
+Flash lamp Hammamatsu,Light source for device,Hamamatsu,1,L13651-SMA,1,$650 ,https://www.hamamatsu.com/jp/en/product/light-and-radiation-sources/lamp-module_unit/xenon-flash-lamp-module/2w/index.html,2,Base ESS (Electronics)
+Heat set inserts,Allows for screws to hold together different device components,Amazon*,1,,1,$10.95 ,https://www.amazon.com/Threaded-Heat-Set-Inserts-connecting-injection/dp/B07BH5X252/ref=sr_1_4?crid=1LEW7WMI0VTN2&dchild=1&keywords=4-40+heat+set+insert&qid=1602701039&sprefix=4-40+heat+%2Cindustrial%2C139&sr=8-4,100,Screws
+Hex Standoffs 2in,Fastners,McMaster,4,91075A224,1,$4.90 ,www.mcmaster.com,4,Screws
+Hex Standoffs 3/4in,Fastners,McMaster,4,91115A519,1,$2.25 ,www.mcmaster.com,4,Screws
+Jumper 2in,"Precrimped jumpers, JST",Digikey,4,,1,$0.70 ,https://www.digikey.com/en/products/detail/jst-sales-america-inc/ASXHSXH22K51/6684930,20,JST Connectors
+Jumper 6in,"Precrimped jumpers, JST",Digikey,7,,1,$0.76 ,https://www.digikey.com/en/products/detail/jst-sales-america-inc/ASXHSXH22K152/6684931,50,JST Connectors
+Li-ion BMS,To manage charging and discharging of 18650 cells,Amazon*,1,,3,$6.99 ,https://www.amazon.com/Charger-Lithium-Battery-Charging-Protection/dp/B07T2P5XHS/ref=pd_di_sccai_6/136-1714892-2743945?_encoding=UTF8&pd_rd_i=B07T2P5XHS&pd_rd_r=c9ba44fb-91d1-4528-ade8-4828c2d64a5e&pd_rd_w=PawQR&pd_rd_wg=o6HL7&pf_rd_p=5415687b-2c9d-46da-88a4-bbcfe8e07f3c&pf_rd_r=894N20PD1H3KH5H2ASC4&psc=1&refRID=894N20PD1H3KH5H2ASC4,2,Base ESS (Electronics)
+M3 Flathead 10mm,Fastners,McMaster,2,92125A130,100,$5.81 ,www.mcmaster.com,100,Screws
+Main PCB,"Connects arduino to Pi, buck converter, adc, pot etc",JLC PCB,1,,5,$23.16 ,jlcpcb.com,1,Base ESS (Electronics)
+Male 16 pin (right angle),Module detect connector,Amazon*,1,,1,$0.31 ,https://www.digikey.com/en/products/detail/adam-tech/BHR-16-HUA/9832524?utm_adgroup=Rectangular%20Connectors%20-%20Headers%2C%20Male%20Pins&utm_source=google&utm_medium=cpc&utm_campaign=Shopping_Product_Connectors%2C%20Interconnects_NEW&utm_term=&utm_content=Rectangular%20Connectors%20-%20Headers%2C%20Male%20Pins&gclid=Cj0KCQiAgomBBhDXARIsAFNyUqNcEaviZgJwURwb-Vg13S8egJYEk1swNlnaYxFh5UU889H0h-oRubwaAlijEALw_wcB,3,JST Connectors
+Male 3 pin,Connector for spectrometer ,Digikey,2,,1,$0.51 ,https://www.digikey.com/en/products/detail/jst-sales-america-inc/B12B-XH-AM-LF-SN/1651031,18,JST Connectors
+Male 4 Pin ,Connector for Flash Lamp,Digikey,1,,1,$0.21 ,https://www.digikey.com/en/products/detail/jst-sales-america-inc/B4B-XH-A-LF-SN/1651047,22,JST Connectors
+Micro USB connector shell,Connect screen to Pi for power and Touch capabilities,Adafruit,1,1390,1,$0.95 ,https://www.adafruit.com/product/1390,5,Base ESS (Connectors)
+Mini USB B connector shell,Connect arduino to pi,Adafruit,1,1389,1,$0.95 ,https://www.adafruit.com/product/1389,3,Base ESS (Connectors)
+Motor Driver,Drive any motor used for module control,Digikey,1,497-2936-5-ND,1,$4.15 ,https://www.digikey.com/en/products/detail/stmicroelectronics/L293D/634700,5,Module Components
+Motor PCB,Control Motor for water Pump Probe ,JLC PCB ,1,,5,$19.75 ,jlcpcb.com,4,Module Components
+On/Off switch,On/Off switch,Adafruit,1,915,1,$4.95 ,https://www.adafruit.com/product/915,4,Base ESS (Connectors)
+Panel Mount USB input,Connect USB flash drive or mouse/keyboard,Adafruit,1,4055,1,$4.95 ,https://www.adafruit.com/product/4055,4,Base ESS (Connectors)
+Potentiometer,sets lower reference for ADC,Digikey,1,,1,$1.98 ,https://www.digikey.com/en/products/detail/3313J-1-103E/3313J-103ECT-ND/612894?itemSeq=341084395,15,Base ESS (Electronics)
+R bend HDMI connector,connect touch screen to Pi,Adafruit,2,3549,1,$6.50 ,https://www.adafruit.com/product/3549,6,Base ESS (Connectors)
+Raspberry Pi 3B+,"Main microprocessor used for controlling saving of files and
+graphical user interface",Adafruit,1,3775,1,$35.00 ,https://www.adafruit.com/product/3775,1,Base ESS (Electronics)
+Raspberry Pi Standoff,Allow connection of Pi to PCB board,Adafruit,1,1979,1,$2.95 ,https://www.adafruit.com/product/1979,1,Screws
+Ribbon Cable 20mm,connect screen to Pi,Adafruit,1,3561,1,$1.95 ,https://www.adafruit.com/product/3561,4,Base ESS (Connectors)
+"SD Card, 32gb Class 10",Card for Pi OS and software,Amazon*,1,,1,$8.35 ,https://www.amazon.com/SanDisk-Ultra-UHS-I-Memory-Adapter/dp/B00M55C0NS,3,Base ESS (Electronics)
+SMD USB ,Mount a USB onto the PCB ,Digikey,1,AE11187-ND,1,$0.82 ,https://www.digikey.com/en/products/detail/assmann-wsw-components/au-y1006-2/5031761,1,Base ESS (Electronics)
+Screw terminal,Connect jumper wires to power or motors,Digikey,2,277-1247-ND,1,$1.09 ,https://www.digikey.com/en/products/detail/phoenix-contact/1729128/260615?utm_adgroup=Connectors%2C%20Interconnects&utm_source=google&utm_medium=cpc&utm_campaign=Shopping_Phoenix%20Contact_0277_Co-op&utm_term=&utm_content=Connectors%2C%20Interconnects&gclid=Cj0KCQiAgomBBhDXARIsAFNyUqOunayGAoaaC8ZQjxEh-h3qxKRR7dxQVQoREdKV1KMICaoebl4OgUIaAt-4EALw_wcB,30,Base ESS (Connectors)
+Straight HDMI connector,connect Pi to touch screen,Adafruit,1,,1,$6.50 ,https://www.adafruit.com/product/3548,1,Base ESS (Electronics)
+USB connector shells,Connect Pi to screen and arduino to Pi,Adafruit,3,1827,1,$0.95 ,https://www.adafruit.com/product/1827,4,Base ESS (Electronics)
